@@ -3,15 +3,15 @@
 
 from setuptools import setup
 from setuptools import find_packages
-import package_name
+import ernie
 
 setup(
-    name='package_name',
-    version=package_name.__version__,
-    description='description_value',
-    url='url_value',
-    author='author_value',
-    author_email='email_value',
+    name='ernie',
+    version=ernie.__version__,
+    description='An Accessible Python Library for State-of-the-art Natural Language Processing. Built with HuggingFace\'s Transformers.',
+    url='https://github.com/brunneis/ernie',
+    author='Rodrigo Martínez Castaño',
+    author_email='rodrigo@martinez.gal',
     license='GNU General Public License v3 (GPLv3)',
     packages=find_packages(),
     zip_safe=False,
@@ -25,4 +25,8 @@ setup(
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    install_requires=[''])  # Dependencies
+    install_requires=['pandas==1.0.1',
+                      'scikit-learn==0.22.1',
+                      'tensorflow==2.1.0',
+                      'transformers==2.4.1',
+                      'py-cpuinfo==5.0.0'])
