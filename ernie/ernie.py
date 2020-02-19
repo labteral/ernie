@@ -50,7 +50,6 @@ def get_features(tokenizer, sentences, labels, max_length):
             input_ids = [tokenizer.pad_token_id] * padding_length + input_ids
             token_type_ids = [tokenizer.pad_token_type_id] * padding_length + token_type_ids
 
-        print(len(attention_mask), len(input_ids), len(token_type_ids))
         assert max_length == len(attention_mask) == len(input_ids) == len(token_type_ids)
 
         feature = {
