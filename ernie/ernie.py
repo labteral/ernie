@@ -33,7 +33,7 @@ class ModelFamilies:
         [getattr(Models, model_type) for model_type in filter(lambda x: x[:2] != '__', Models.__dict__.keys())])
 
 
-def get_features(tokenizer, sentences, labels, max_length):
+def get_features(tokenizer, sentences, max_length, labels=None):
     features = []
     for i, sentence in enumerate(sentences):
         inputs = tokenizer.encode_plus(sentence, add_special_tokens=True, max_length=max_length)
@@ -193,28 +193,45 @@ class BinaryClassifier:
                         steps_per_epoch=training_steps,
                         validation_steps=validation_steps)
 
-    def predict(self, sentence):
-        features = self._tokenizer.encode_plus(sentence,
-                                               add_special_tokens=True,
-                                               max_length=self._max_length,
-                                               return_tensors='tf')
-        input_ids, token_type_ids, attention_mask = features['input_ids'], features['token_type_ids'], features[
-            'attention_mask']
-        prediction = self._model.predict({
-            'input_ids': input_ids,
-            'token_type_ids': token_type_ids,
-            'attention_mask': attention_mask
-        })[0]
-        return softmax(prediction)
+    def predict(self, sentences):
+        if isinstance(sentences, str):
+            sentences = [sentences]
+        sentences_no = len(sentences)
+
+        # features = self._get_features(sentences)
+        # logit_predictions = self._model.predict(features)
+        # softmax_predictions = [
+        #     softmax(logit_predictions[i]) for i in range(0, self._max_length * sentences_no, self._max_length)
+        # ]
+
+        softmax_predictions = []
+        for sentence in sentences:
+            features = self._tokenizer.encode_plus(sentence,
+                                                   add_special_tokens=True,
+                                                   max_length=self._max_length,
+                                                   return_tensors='tf')
+            input_ids, token_type_ids, attention_mask = features['input_ids'], features['token_type_ids'], features[
+                'attention_mask']
+            prediction = self._model.predict({
+                'input_ids': input_ids,
+                'token_type_ids': token_type_ids,
+                'attention_mask': attention_mask
+            })[0]
+            softmax_prediction = softmax(prediction)
+            softmax_predictions.append(softmax_prediction)
+
+        if len(softmax_predictions) == 1:
+            return softmax_predictions[0]
+        return softmax_predictions
 
     def dump(self, path):
         raise NotImplementedError
 
-    def _get_features(self, sentences, labels):
+    def _get_features(self, sentences, labels=None):
         features = get_features(tokenizer=self._tokenizer,
                                 sentences=sentences,
-                                labels=labels,
-                                max_length=self._max_length)
+                                max_length=self._max_length,
+                                labels=labels)
         return features
 
     @staticmethod

@@ -27,7 +27,7 @@ pip install ernie
 
 ## Binary Classification
 ```python
-from ernie import BinaryClassifier
+from ernie import BinaryClassifier, Models
 import pandas as pd
 
 tuples = [("This is a positive example. I'm very happy today.", 1),
