@@ -35,9 +35,9 @@ tuples = [("This is a positive example. I'm very happy today.", 1),
 
 df = pd.DataFrame(tuples)
 
-classifier = BinaryClassifier()
-classifier.load_dataset(df)
-classifier.train()
+classifier = BinaryClassifier(model=Models.BertBaseUncased)
+classifier.load_dataset(df, validation_size=0.2)
+classifier.train(epochs=4, training_batch_size=32, validation_batch_size=64)
 
 sentence = "Oh, that's great!"
 probabilities = classifier.predict(sentence)

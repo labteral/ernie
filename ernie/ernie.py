@@ -8,28 +8,49 @@ from sklearn.model_selection import train_test_split
 from math import exp
 
 
-class Model:
+class Models:
     BertBaseUncased = 'bert-base-uncased'
+    BertBaseCased = 'bert-base-cased'
+    BertLargeUncased = 'bert-large-uncased'
+    BertLargeCased = 'bert-large-cased'
+
+    RobertaBaseCased = 'roberta-base'
+    RobertaLargeCased = 'roberta-large'
+
+    XLNetBaseCased = 'xlnet-base-cased'
+    XLNetLargeCased = 'xlnet-large-cased'
+
+    DistilBertBaseUncased = 'distilbert-base-uncased'
+    DistilBertBaseMultilingualCased = 'distilbert-base-multilingual-cased'
 
 
-class ModelTypes:
-    Bert = set([Model.BertBaseUncased])
+class ModelFamilies:
+    Bert = set([Models.BertBaseUncased, Models.BertBaseCased, Models.BertLargeUncased, Models.BertLargeCased])
+    Roberta = set([Models.RobertaBaseCased, Models.RobertaLargeCased])
+    XLNet = set([Models.XLNetBaseCased, Models.XLNetLargeCased])
+    DistilBert = set([Models.DistilBertBaseUncased, Models.DistilBertBaseMultilingualCased])
     Supported = set(
-        [getattr(Model, model_type) for model_type in filter(lambda x: x[:2] != '__', Model.__dict__.keys())])
+        [getattr(Models, model_type) for model_type in filter(lambda x: x[:2] != '__', Models.__dict__.keys())])
 
 
-def get_features(tokenizer, sentences, labels, max_length, pad_token, pad_token_segment_id):
-    # TODO - This only supports binary classification
+def get_features(tokenizer, sentences, labels, max_length):
     features = []
     for i, sentence in enumerate(sentences):
         inputs = tokenizer.encode_plus(sentence, add_special_tokens=True, max_length=max_length)
         input_ids, token_type_ids = inputs["input_ids"], inputs["token_type_ids"]
 
         padding_length = max_length - len(input_ids)
-        attention_mask = [1] * len(input_ids) + [0] * padding_length
-        token_type_ids = token_type_ids + [pad_token_segment_id] * padding_length
-        input_ids = input_ids + [pad_token] * padding_length
 
+        if tokenizer.padding_side == 'right':
+            attention_mask = [1] * len(input_ids) + [0] * padding_length
+            input_ids = input_ids + [tokenizer.pad_token_id] * padding_length
+            token_type_ids = token_type_ids + [tokenizer.pad_token_type_id] * padding_length
+        else:
+            attention_mask = [0] * padding_length + [1] * len(input_ids)
+            input_ids = [tokenizer.pad_token_id] * padding_length + input_ids
+            token_type_ids = [tokenizer.pad_token_type_id] * padding_length + token_type_ids
+
+        print(len(attention_mask), len(input_ids), len(token_type_ids))
         assert max_length == len(attention_mask) == len(input_ids) == len(token_type_ids)
 
         feature = {
@@ -79,7 +100,7 @@ def softmax(values):
 
 class BinaryClassifier:
     def __init__(self,
-                 model=Model.BertBaseUncased,
+                 model=Models.BertBaseUncased,
                  max_length=128,
                  learning_rate=2e-5,
                  epsilon=1e-8,
@@ -93,30 +114,16 @@ class BinaryClassifier:
                  model_path=None):
         self._loaded_data = False
 
-        if model not in ModelTypes.Supported:
-            raise ValueError(f'The model "{model}" is not supported.')
-
-        self._max_length = max_length
-
-        self._model = None
         if model_path is not None:
             # self._model =
             raise NotImplementedError
-
-        if model in ModelTypes.Bert:
-            do_lower_case = False
-            if 'uncased' in model.lower():
-                do_lower_case = True
-
-            self._tokenizer = BertTokenizer.from_pretrained(model, do_lower_case=do_lower_case)
-            if self._model is None:
-                self._model = TFBertForSequenceClassification.from_pretrained(model)
-
-            self._pad_token = 0
-            self._pad_token_segment_id = 0
-
         else:
-            raise NotImplementedError
+            if model not in ModelFamilies.Supported:
+                # AutoTokenizer, AutoModel
+                raise NotImplementedError
+            self._tokenizer, self._model = self._get_model_items(model)
+
+        self._max_length = max_length
 
         if optimizer_kwargs is None:
             optimizer_kwargs = {'learning_rate': learning_rate, 'epsilon': epsilon, 'clipnorm': clipnorm}
@@ -192,9 +199,14 @@ class BinaryClassifier:
                                                add_special_tokens=True,
                                                max_length=self._max_length,
                                                return_tensors='tf')
-        input_ids, token_type_ids, attention_mask = features['input_ids'], features['token_type_ids'], features['attention_mask']
-        prediction = self._model.predict({'input_ids': input_ids, 'token_type_ids': token_type_ids, 'attention_mask': attention_mask})[0]
-        return softmax(prediction)[1]
+        input_ids, token_type_ids, attention_mask = features['input_ids'], features['token_type_ids'], features[
+            'attention_mask']
+        prediction = self._model.predict({
+            'input_ids': input_ids,
+            'token_type_ids': token_type_ids,
+            'attention_mask': attention_mask
+        })[0]
+        return softmax(prediction)
 
     def dump(self, path):
         raise NotImplementedError
@@ -203,7 +215,28 @@ class BinaryClassifier:
         features = get_features(tokenizer=self._tokenizer,
                                 sentences=sentences,
                                 labels=labels,
-                                max_length=self._max_length,
-                                pad_token=self._pad_token,
-                                pad_token_segment_id=self._pad_token_segment_id)
+                                max_length=self._max_length)
         return features
+
+    @staticmethod
+    def _get_model_items(model):
+        do_lower_case = False
+        if 'uncased' in model.lower():
+            do_lower_case = True
+
+        if model in ModelFamilies.Bert:
+            tokenizer = BertTokenizer.from_pretrained(model, do_lower_case=do_lower_case)
+            model = TFBertForSequenceClassification.from_pretrained(model)
+        elif model in ModelFamilies.Roberta:
+            tokenizer = RobertaTokenizer.from_pretrained(model, do_lower_case=do_lower_case)
+            model = TFRobertaForSequenceClassification.from_pretrained(model)
+        elif model in ModelFamilies.XLNet:
+            tokenizer = XLNetTokenizer.from_pretrained(model, do_lower_case=do_lower_case)
+            model = TFXLNetForSequenceClassification.from_pretrained(model)
+        elif model in ModelFamilies.DistilBert:
+            tokenizer = DistilBertTokenizer.from_pretrained(model, do_lower_case=do_lower_case)
+            model = TFDistilBertForSequenceClassification.from_pretrained(model)
+        else:
+            raise ValueError(f'Model {model} not supported.')
+
+        return tokenizer, model
