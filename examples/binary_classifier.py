@@ -14,5 +14,5 @@ classifier.load_dataset(df, validation_split=0.2)
 classifier.fine_tune(epochs=4, training_batch_size=32, validation_batch_size=64)
 
 sentence = "Oh, that's great!"
-probability = classifier.predict(sentence)[1]
+probability = classifier.predict_one(sentence)[1]
 print(f"\"{sentence}\": {probability} [{'positive' if probability >= 0.5 else 'negative'}]")

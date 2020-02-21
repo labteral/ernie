@@ -193,37 +193,42 @@ class BinaryClassifier:
                         validation_steps=validation_steps,
                         **kwargs)
 
-    def predict(self, sentences):
-        if isinstance(sentences, str):
-            sentences = [sentences]
-        sentences_no = len(sentences)
+    def predict_one(self, sentence):
+        return next(self.predict([sentence], batch_size=1))
 
-        input_ids_list = []
-        token_type_ids_list = []
-        attention_mask_list = []
+    def predict(self, sentences, batch_size=32):
+        sentences_number = len(sentences)
+        if batch_size > sentences_number:
+            batch_size = sentences_number
 
-        for sentence in sentences:
-            features = self._tokenizer.encode_plus(sentence, add_special_tokens=True, max_length=self._max_length)
-            input_ids, token_type_ids, attention_mask = features['input_ids'], features['token_type_ids'], features[
-                'attention_mask']
+        for i in range(0, sentences_number, batch_size):
+            input_ids_list = []
+            token_type_ids_list = []
+            attention_mask_list = []
 
-            input_ids = self._list_to_padded_array(features['input_ids'])
-            token_type_ids = self._list_to_padded_array(features['token_type_ids'])
-            attention_mask = self._list_to_padded_array(features['attention_mask'])
+            stop_index = i + batch_size
+            stop_index = stop_index if stop_index < sentences_number else sentences_number
+            for j in range(i, stop_index):
+                features = self._tokenizer.encode_plus(sentences[j],
+                                                       add_special_tokens=True,
+                                                       max_length=self._max_length)
+                input_ids, token_type_ids, attention_mask = features['input_ids'], features['token_type_ids'], features[
+                    'attention_mask']
 
-            input_ids_list.append(input_ids)
-            token_type_ids_list.append(token_type_ids)
-            attention_mask_list.append(attention_mask)
+                input_ids = self._list_to_padded_array(features['input_ids'])
+                token_type_ids = self._list_to_padded_array(features['token_type_ids'])
+                attention_mask = self._list_to_padded_array(features['attention_mask'])
 
-        logit_predictions = self._model.predict_on_batch(
-            [np.array(attention_mask_list),
-             np.array(input_ids_list),
-             np.array(token_type_ids_list)])
-        softmax_predictions = tuple([softmax(logit_prediction) for logit_prediction in logit_predictions[0]])
+                input_ids_list.append(input_ids)
+                token_type_ids_list.append(token_type_ids)
+                attention_mask_list.append(attention_mask)
 
-        if len(softmax_predictions) == 1:
-            return softmax_predictions[0]
-        return softmax_predictions
+            logit_predictions = self._model.predict_on_batch(
+                [np.array(attention_mask_list),
+                 np.array(input_ids_list),
+                 np.array(token_type_ids_list)])
+
+            yield from ([softmax(logit_prediction) for logit_prediction in logit_predictions[0]])
 
     def dump(self, path):
         raise NotImplementedError

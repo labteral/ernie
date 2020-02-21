@@ -39,5 +39,5 @@ classifier.load_dataset(df, validation_split=0.2)
 classifier.fine_tune(epochs=4, training_batch_size=32, validation_batch_size=64)
 
 sentence = "Oh, that's great!"
-probabilities = classifier.predict(sentence)
+probabilities = classifier.predict_one(sentence)
 ```
