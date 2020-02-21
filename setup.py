@@ -25,8 +25,9 @@ setup(
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    install_requires=['pandas==1.0.1',
+    python_requires=">=3.6",
+    install_requires=['transformers==2.5.0',
                       'scikit-learn==0.22.1',
-                      'tensorflow==2.1.0',
-                      'transformers==2.4.1',
+                      'pandas>=0.25.3',
+                      'tensorflow>=2.1.0',
                       'py-cpuinfo==5.0.0'])

@@ -146,7 +146,7 @@ class BinaryClassifier:
     def tokenizer(self):
         return self._tokenizer
 
-    def load_dataset(self, dataframe=None, csv_path=None, validation_size=0.1):
+    def load_dataset(self, dataframe=None, csv_path=None, validation_split=0.1):
         if dataframe is None and csv_path is None:
             raise ValueError
 
@@ -158,19 +158,19 @@ class BinaryClassifier:
             raise NotImplementedError
 
         training_sentences, validation_sentences, training_labels, validation_labels = train_test_split(
-            sentences, labels, random_state=1984, test_size=validation_size, shuffle=True)
+            sentences, labels, test_size=validation_split, shuffle=True)
 
         self._training_features = self._get_features(training_sentences, training_labels)
         self._training_size = len(training_sentences)
-        logging.info(f'training_size: {self._training_size}')
+        print(f'training_size: {self._training_size}')
 
         self._validation_features = self._get_features(validation_sentences, validation_labels)
-        self._validation_size = len(validation_sentences)
-        logging.info(f'validation_size: {self._validation_size}')
+        self._validation_split = len(validation_sentences)
+        print(f'validation_split: {self._validation_split}')
 
         self._loaded_data = True
 
-    def train(self, epochs=4, training_batch_size=32, validation_batch_size=64):
+    def fine_tune(self, training_batch_size=32, validation_batch_size=64, **kwargs):
         if not self._loaded_data:
             return
 
@@ -180,45 +180,46 @@ class BinaryClassifier:
         training_steps = self._training_size // training_batch_size
         if training_steps == 0:
             training_steps = self._training_size
-        logging.info(f'training_steps: {training_steps}')
+        print(f'training_steps: {training_steps}')
 
-        validation_steps = self._validation_size // validation_batch_size
+        validation_steps = self._validation_split // validation_batch_size
         if validation_steps == 0:
-            validation_steps = self._validation_size
-        logging.info(f'validation_steps: {validation_steps}')
+            validation_steps = self._validation_split
+        print(f'validation_steps: {validation_steps}')
 
         self._model.fit(training_features,
-                        epochs=epochs,
                         validation_data=validation_features,
                         steps_per_epoch=training_steps,
-                        validation_steps=validation_steps)
+                        validation_steps=validation_steps,
+                        **kwargs)
 
     def predict(self, sentences):
         if isinstance(sentences, str):
             sentences = [sentences]
         sentences_no = len(sentences)
 
-        # features = self._get_features(sentences)
-        # logit_predictions = self._model.predict(features)
-        # softmax_predictions = [
-        #     softmax(logit_predictions[i]) for i in range(0, self._max_length * sentences_no, self._max_length)
-        # ]
+        input_ids_list = []
+        token_type_ids_list = []
+        attention_mask_list = []
 
-        softmax_predictions = []
         for sentence in sentences:
-            features = self._tokenizer.encode_plus(sentence,
-                                                   add_special_tokens=True,
-                                                   max_length=self._max_length,
-                                                   return_tensors='tf')
+            features = self._tokenizer.encode_plus(sentence, add_special_tokens=True, max_length=self._max_length)
             input_ids, token_type_ids, attention_mask = features['input_ids'], features['token_type_ids'], features[
                 'attention_mask']
-            prediction = self._model.predict({
-                'input_ids': input_ids,
-                'token_type_ids': token_type_ids,
-                'attention_mask': attention_mask
-            })[0]
-            softmax_prediction = softmax(prediction)
-            softmax_predictions.append(softmax_prediction)
+
+            input_ids = self._list_to_padded_array(features['input_ids'])
+            token_type_ids = self._list_to_padded_array(features['token_type_ids'])
+            attention_mask = self._list_to_padded_array(features['attention_mask'])
+
+            input_ids_list.append(input_ids)
+            token_type_ids_list.append(token_type_ids)
+            attention_mask_list.append(attention_mask)
+
+        logit_predictions = self._model.predict_on_batch(
+            [np.array(attention_mask_list),
+             np.array(input_ids_list),
+             np.array(token_type_ids_list)])
+        softmax_predictions = tuple([softmax(logit_prediction) for logit_prediction in logit_predictions[0]])
 
         if len(softmax_predictions) == 1:
             return softmax_predictions[0]
@@ -234,25 +235,33 @@ class BinaryClassifier:
                                 labels=labels)
         return features
 
+    def _list_to_padded_array(self, items):
+        array = np.array(items)
+        padded_array = np.zeros(self._max_length, dtype=np.int)
+        padded_array[:array.shape[0]] = array
+        return padded_array
+
     @staticmethod
-    def _get_model_items(model):
+    def _get_model_items(model_name):
         do_lower_case = False
-        if 'uncased' in model.lower():
+        if 'uncased' in model_name.lower():
             do_lower_case = True
 
-        if model in ModelFamilies.Bert:
-            tokenizer = BertTokenizer.from_pretrained(model, do_lower_case=do_lower_case)
-            model = TFBertForSequenceClassification.from_pretrained(model)
-        elif model in ModelFamilies.Roberta:
-            tokenizer = RobertaTokenizer.from_pretrained(model, do_lower_case=do_lower_case)
-            model = TFRobertaForSequenceClassification.from_pretrained(model)
-        elif model in ModelFamilies.XLNet:
-            tokenizer = XLNetTokenizer.from_pretrained(model, do_lower_case=do_lower_case)
-            model = TFXLNetForSequenceClassification.from_pretrained(model)
-        elif model in ModelFamilies.DistilBert:
-            tokenizer = DistilBertTokenizer.from_pretrained(model, do_lower_case=do_lower_case)
-            model = TFDistilBertForSequenceClassification.from_pretrained(model)
-        else:
-            raise ValueError(f'Model {model} not supported.')
+        tokenizer = None
+        model = None
+
+        if model_name in ModelFamilies.Bert:
+            tokenizer = BertTokenizer.from_pretrained(model_name, do_lower_case=do_lower_case)
+            model = TFBertForSequenceClassification.from_pretrained(model_name)
+        elif model_name in ModelFamilies.Roberta:
+            tokenizer = RobertaTokenizer.from_pretrained(model_name, do_lower_case=do_lower_case)
+            model = TFRobertaForSequenceClassification.from_pretrained(model_name)
+        elif model_name in ModelFamilies.XLNet:
+            tokenizer = XLNetTokenizer.from_pretrained(model_name, do_lower_case=do_lower_case)
+            model = TFXLNetForSequenceClassification.from_pretrained(model_name)
+        elif model_name in ModelFamilies.DistilBert:
+            tokenizer = DistilBertTokenizer.from_pretrained(model_name, do_lower_case=do_lower_case)
+            model = TFDistilBertForSequenceClassification.from_pretrained(model_name)
+        assert tokenizer and model
 
         return tokenizer, model
