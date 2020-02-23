@@ -6,6 +6,10 @@ import numpy as np
 from transformers import *
 from sklearn.model_selection import train_test_split
 from math import exp
+from os.path import isdir
+from os import makedirs
+import time
+import json
 
 
 class Models:
@@ -33,13 +37,13 @@ class ModelFamilies:
         [getattr(Models, model_type) for model_type in filter(lambda x: x[:2] != '__', Models.__dict__.keys())])
 
 
-def get_features(tokenizer, sentences, max_length, labels=None):
+def get_features(tokenizer, sentences, labels=None):
     features = []
     for i, sentence in enumerate(sentences):
-        inputs = tokenizer.encode_plus(sentence, add_special_tokens=True, max_length=max_length)
+        inputs = tokenizer.encode_plus(sentence, add_special_tokens=True)
         input_ids, token_type_ids = inputs["input_ids"], inputs["token_type_ids"]
 
-        padding_length = max_length - len(input_ids)
+        padding_length = tokenizer.max_len - len(input_ids)
 
         if tokenizer.padding_side == 'right':
             attention_mask = [1] * len(input_ids) + [0] * padding_length
@@ -50,7 +54,7 @@ def get_features(tokenizer, sentences, max_length, labels=None):
             input_ids = [tokenizer.pad_token_id] * padding_length + input_ids
             token_type_ids = [tokenizer.pad_token_type_id] * padding_length + token_type_ids
 
-        assert max_length == len(attention_mask) == len(input_ids) == len(token_type_ids)
+        assert tokenizer.max_len == len(attention_mask) == len(input_ids) == len(token_type_ids)
 
         feature = {
             'input_ids': input_ids,
@@ -99,44 +103,24 @@ def softmax(values):
 
 class BinaryClassifier:
     def __init__(self,
-                 model=Models.BertBaseUncased,
+                 model_name=Models.BertBaseUncased,
+                 model_path=None,
                  max_length=128,
-                 learning_rate=2e-5,
-                 epsilon=1e-8,
-                 clipnorm=1.0,
-                 optimizer_function=tf.keras.optimizers.Adam,
-                 optimizer_kwargs=None,
-                 loss_function=tf.keras.losses.SparseCategoricalCrossentropy,
-                 loss_kwargs=None,
-                 accuracy_function=tf.keras.metrics.SparseCategoricalAccuracy,
-                 accuracy_kwargs=None,
-                 model_path=None):
+                 tokenizer_kwargs=None,
+                 model_kwargs=None):
         self._loaded_data = False
 
+        if model_kwargs is None:
+            model_kwargs = {}
+
+        if tokenizer_kwargs is None:
+            tokenizer_kwargs = {}
+        tokenizer_kwargs['max_len'] = max_length
+
         if model_path is not None:
-            # self._model =
-            raise NotImplementedError
+            self._load_local_model(model_path)
         else:
-            if model not in ModelFamilies.Supported:
-                # AutoTokenizer, AutoModel
-                raise NotImplementedError
-            self._tokenizer, self._model = self._get_model_items(model)
-
-        self._max_length = max_length
-
-        if optimizer_kwargs is None:
-            optimizer_kwargs = {'learning_rate': learning_rate, 'epsilon': epsilon, 'clipnorm': clipnorm}
-        optimizer = optimizer_function(**optimizer_kwargs)
-
-        if loss_kwargs is None:
-            loss_kwargs = {'from_logits': True}
-        loss = loss_function(**loss_kwargs)
-
-        if accuracy_kwargs is None:
-            accuracy_kwargs = {'name': 'accuracy'}
-        accuracy = accuracy_function(**accuracy_kwargs)
-
-        self._model.compile(optimizer=optimizer, loss=loss, metrics=[accuracy])
+            self._load_remote_model(model_name, tokenizer_kwargs, model_kwargs)
 
     @property
     def model(self):
@@ -170,9 +154,35 @@ class BinaryClassifier:
 
         self._loaded_data = True
 
-    def fine_tune(self, training_batch_size=32, validation_batch_size=64, **kwargs):
+    def fine_tune(self,
+                  learning_rate=2e-5,
+                  epsilon=1e-8,
+                  clipnorm=1.0,
+                  optimizer_function=tf.keras.optimizers.Adam,
+                  optimizer_kwargs=None,
+                  loss_function=tf.keras.losses.SparseCategoricalCrossentropy,
+                  loss_kwargs=None,
+                  accuracy_function=tf.keras.metrics.SparseCategoricalAccuracy,
+                  accuracy_kwargs=None,
+                  training_batch_size=32,
+                  validation_batch_size=64,
+                  **kwargs):
         if not self._loaded_data:
-            return
+            raise Exception('Data has not been loaded.')
+
+        if optimizer_kwargs is None:
+            optimizer_kwargs = {'learning_rate': learning_rate, 'epsilon': epsilon, 'clipnorm': clipnorm}
+        optimizer = optimizer_function(**optimizer_kwargs)
+
+        if loss_kwargs is None:
+            loss_kwargs = {'from_logits': True}
+        loss = loss_function(**loss_kwargs)
+
+        if accuracy_kwargs is None:
+            accuracy_kwargs = {'name': 'accuracy'}
+        accuracy = accuracy_function(**accuracy_kwargs)
+
+        self._model.compile(optimizer=optimizer, loss=loss, metrics=[accuracy])
 
         training_features = self._training_features.shuffle(self._training_size).batch(training_batch_size).repeat(-1)
         validation_features = self._validation_features.batch(validation_batch_size)
@@ -193,6 +203,8 @@ class BinaryClassifier:
                         validation_steps=validation_steps,
                         **kwargs)
 
+        self._reload_model()
+
     def predict_one(self, sentence):
         return next(self.predict([sentence], batch_size=1))
 
@@ -209,9 +221,7 @@ class BinaryClassifier:
             stop_index = i + batch_size
             stop_index = stop_index if stop_index < sentences_number else sentences_number
             for j in range(i, stop_index):
-                features = self._tokenizer.encode_plus(sentences[j],
-                                                       add_special_tokens=True,
-                                                       max_length=self._max_length)
+                features = self._tokenizer.encode_plus(sentences[j], add_special_tokens=True)
                 input_ids, token_type_ids, attention_mask = features['input_ids'], features['token_type_ids'], features[
                     'attention_mask']
 
@@ -223,50 +233,65 @@ class BinaryClassifier:
                 token_type_ids_list.append(token_type_ids)
                 attention_mask_list.append(attention_mask)
 
+            # zeros = np.zeros_like(np.array(input_ids_list))
+
             logit_predictions = self._model.predict_on_batch(
-                [np.array(attention_mask_list),
-                 np.array(input_ids_list),
+                [np.array(input_ids_list),
+                 np.array(attention_mask_list),
                  np.array(token_type_ids_list)])
 
             yield from ([softmax(logit_prediction) for logit_prediction in logit_predictions[0]])
 
     def dump(self, path):
-        raise NotImplementedError
+        try:
+            makedirs(path)
+        except FileExistsError:
+            pass
+        self._model.save_pretrained(path)
+        self._tokenizer.save_pretrained(path)
 
     def _get_features(self, sentences, labels=None):
-        features = get_features(tokenizer=self._tokenizer,
-                                sentences=sentences,
-                                max_length=self._max_length,
-                                labels=labels)
+        features = get_features(tokenizer=self._tokenizer, sentences=sentences, labels=labels)
         return features
 
     def _list_to_padded_array(self, items):
         array = np.array(items)
-        padded_array = np.zeros(self._max_length, dtype=np.int)
+        padded_array = np.zeros(self._tokenizer.max_len, dtype=np.int)
         padded_array[:array.shape[0]] = array
         return padded_array
 
-    @staticmethod
-    def _get_model_items(model_name):
+    def _load_local_model(self, path):
+        self._model = TFAutoModelForSequenceClassification.from_pretrained(path)
+        self._tokenizer = AutoTokenizer.from_pretrained(path)
+
+    def _reload_model(self):
+        temporary_path = f'/tmp/ernie/{int(round(time.time() * 1000))}'
+        self.dump(temporary_path)
+        self._load_local_model(temporary_path)
+
+    def _load_remote_model(self, model_name, tokenizer_kwargs, model_kwargs):
+        if model_name not in ModelFamilies.Supported:
+            raise ValueError(f'Model {model_name} not supported.')
+
         do_lower_case = False
         if 'uncased' in model_name.lower():
             do_lower_case = True
+        tokenizer_kwargs.update({'do_lower_case': do_lower_case})
 
-        tokenizer = None
-        model = None
+        self._tokenizer = None
+        self._model = None
 
         if model_name in ModelFamilies.Bert:
-            tokenizer = BertTokenizer.from_pretrained(model_name, do_lower_case=do_lower_case)
-            model = TFBertForSequenceClassification.from_pretrained(model_name)
+            self._tokenizer = BertTokenizer.from_pretrained(model_name, **tokenizer_kwargs)
+            self._model = TFBertForSequenceClassification.from_pretrained(model_name, **model_kwargs)
         elif model_name in ModelFamilies.Roberta:
-            tokenizer = RobertaTokenizer.from_pretrained(model_name, do_lower_case=do_lower_case)
-            model = TFRobertaForSequenceClassification.from_pretrained(model_name)
+            self._tokenizer = RobertaTokenizer.from_pretrained(model_name, **tokenizer_kwargs)
+            self._model = TFRobertaForSequenceClassification.from_pretrained(model_name, **model_kwargs)
         elif model_name in ModelFamilies.XLNet:
-            tokenizer = XLNetTokenizer.from_pretrained(model_name, do_lower_case=do_lower_case)
-            model = TFXLNetForSequenceClassification.from_pretrained(model_name)
+            self._tokenizer = XLNetTokenizer.from_pretrained(model_name, **tokenizer_kwargs)
+            self._model = TFXLNetForSequenceClassification.from_pretrained(model_name, **model_kwargs)
         elif model_name in ModelFamilies.DistilBert:
-            tokenizer = DistilBertTokenizer.from_pretrained(model_name, do_lower_case=do_lower_case)
-            model = TFDistilBertForSequenceClassification.from_pretrained(model_name)
-        assert tokenizer and model
+            self._tokenizer = DistilBertTokenizer.from_pretrained(model_name, **tokenizer_kwargs)
+            self._model = TFDistilBertForSequenceClassification.from_pretrained(model_name, **model_kwargs)
 
-        return tokenizer, model
+        assert self._tokenizer and self._model
