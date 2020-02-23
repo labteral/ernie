@@ -4,9 +4,9 @@
 from .ernie import *
 import logging
 
-__version__ = '0.0.9b0'
+__version__ = '0.0.10b0'
 
-logging.getLogger().setLevel(logging.WARNING)
+logging.getLogger().setLevel(logging.INFO)
 logging.basicConfig(format='%(asctime)-15s [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 

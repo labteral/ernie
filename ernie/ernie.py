@@ -38,10 +38,10 @@ class ModelFamilies:
         [getattr(Models, model_type) for model_type in filter(lambda x: x[:2] != '__', Models.__dict__.keys())])
 
 
-def get_features(tokenizer, sentences, labels=None):
+def get_features(tokenizer, sentences, labels):
     features = []
     for i, sentence in enumerate(sentences):
-        inputs = tokenizer.encode_plus(sentence, add_special_tokens=True)
+        inputs = tokenizer.encode_plus(sentence, add_special_tokens=True, max_length=tokenizer.max_len)
         input_ids, token_type_ids = inputs["input_ids"], inputs["token_type_ids"]
 
         padding_length = tokenizer.max_len - len(input_ids)
@@ -55,13 +55,14 @@ def get_features(tokenizer, sentences, labels=None):
             input_ids = [tokenizer.pad_token_id] * padding_length + input_ids
             token_type_ids = [tokenizer.pad_token_type_id] * padding_length + token_type_ids
 
-        assert tokenizer.max_len == len(attention_mask) == len(input_ids) == len(token_type_ids)
+        assert tokenizer.max_len == len(attention_mask) == len(input_ids) == len(
+            token_type_ids), f'{tokenizer.max_len}, {len(attention_mask)}, {len(input_ids)}, {len(token_type_ids)}'
 
         feature = {
             'input_ids': input_ids,
             'attention_mask': attention_mask,
             'token_type_ids': token_type_ids,
-            'label': int(labels[i]) if labels is not None else -1
+            'label': int(labels[i])
         }
 
         features.append(feature)
@@ -145,13 +146,13 @@ class BinaryClassifier:
         training_sentences, validation_sentences, training_labels, validation_labels = train_test_split(
             sentences, labels, test_size=validation_split, shuffle=True)
 
-        self._training_features = self._get_features(training_sentences, training_labels)
+        self._training_features = get_features(self._tokenizer, training_sentences, training_labels)
         self._training_size = len(training_sentences)
-        print(f'training_size: {self._training_size}')
+        logging.info(f'training_size: {self._training_size}')
 
-        self._validation_features = self._get_features(validation_sentences, validation_labels)
+        self._validation_features = get_features(self._tokenizer, validation_sentences, validation_labels)
         self._validation_split = len(validation_sentences)
-        print(f'validation_split: {self._validation_split}')
+        logging.info(f'validation_split: {self._validation_split}')
 
         self._loaded_data = True
 
@@ -191,12 +192,12 @@ class BinaryClassifier:
         training_steps = self._training_size // training_batch_size
         if training_steps == 0:
             training_steps = self._training_size
-        print(f'training_steps: {training_steps}')
+        logging.info(f'training_steps: {training_steps}')
 
         validation_steps = self._validation_split // validation_batch_size
         if validation_steps == 0:
             validation_steps = self._validation_split
-        print(f'validation_steps: {validation_steps}')
+        logging.info(f'validation_steps: {validation_steps}')
 
         self._model.fit(training_features,
                         validation_data=validation_features,
@@ -250,10 +251,6 @@ class BinaryClassifier:
             pass
         self._model.save_pretrained(path)
         self._tokenizer.save_pretrained(path)
-
-    def _get_features(self, sentences, labels=None):
-        features = get_features(tokenizer=self._tokenizer, sentences=sentences, labels=labels)
-        return features
 
     def _list_to_padded_array(self, items):
         array = np.array(items)
