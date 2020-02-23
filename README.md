@@ -6,11 +6,17 @@
 <p>
 
 <p align="center">
-    <a href="https://github.com/brunneis/ernie/blob/master/LICENSE">
-        <img alt="GitHub" src="https://img.shields.io/github/license/brunneis/ernie.svg?style=flat-square&color=blue">
+    <a href="https://pypi.python.org/pypi/ernie/">
+        <img alt="Downloads" src="https://img.shields.io/pypi/dm/ernie.svg?style=flat-square">
+    </a>
+    <a href="https://pypi.python.org/pypi/ernie/">
+        <img alt="PyPi" src="https://img.shields.io/pypi/v/ernie.svg?style=flat-square">
     </a>
     <a href="https://github.com/brunneis/ernie/releases">
-        <img alt="GitHub release" src="https://img.shields.io/github/release/brunneis/ernie.svg?style=flat-square">
+        <img alt="GitHub releases" src="https://img.shields.io/github/release/brunneis/ernie.svg?style=flat-square">
+    </a>
+    <a href="https://github.com/brunneis/ernie/blob/master/LICENSE">
+        <img alt="License" src="https://img.shields.io/github/license/brunneis/ernie.svg?style=flat-square&color=blue">
     </a>
 </p>
 
