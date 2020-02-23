@@ -4,9 +4,9 @@
 from .ernie import *
 import logging
 
-__version__ = '0.0.10b0'
+__version__ = '0.0.12b0'
 
-logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().setLevel(logging.WARNING)
 logging.basicConfig(format='%(asctime)-15s [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 
@@ -34,4 +34,4 @@ except IndexError:
     pass
 
 logging.info(f'ernie v{__version__}')
-print(f'target device: [{device_type}] {device_name}\n')
+logging.info(f'target device: [{device_type}] {device_name}\n')

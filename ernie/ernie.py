@@ -6,7 +6,6 @@ import numpy as np
 from transformers import *
 from sklearn.model_selection import train_test_split
 from math import exp
-from os.path import isdir
 from os import makedirs
 import time
 import json
@@ -234,8 +233,6 @@ class BinaryClassifier:
                 input_ids_list.append(input_ids)
                 token_type_ids_list.append(token_type_ids)
                 attention_mask_list.append(attention_mask)
-
-            # zeros = np.zeros_like(np.array(input_ids_list))
 
             logit_predictions = self._model.predict_on_batch(
                 [np.array(input_ids_list),
