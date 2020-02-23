@@ -23,8 +23,10 @@
 pip install ernie
 ```
 
-# Classifiers
-## Binary Classifier
+# Usage
+<a href="https://colab.research.google.com/drive/10lmqZyAHFP_-x4LxIQxZCavYpPqcR28c"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg?style=flat-square"></a>
+
+## Binary Classification
 ```python
 from ernie import BinaryClassifier, Models
 import pandas as pd
