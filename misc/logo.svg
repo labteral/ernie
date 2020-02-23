@@ -8,7 +8,7 @@
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    inkscape:version="1.0beta2 (2b71d25, 2019-12-03)"
-   sodipodi:docname="logo_v3.svg"
+   sodipodi:docname="logo_v4.svg"
    id="svg293"
    viewBox="0 0 83.610315 125.21921"
    version="1.1"
@@ -17,13 +17,13 @@
   <defs
      id="defs297" />
   <sodipodi:namedview
-     inkscape:current-layer="svg293"
-     inkscape:window-maximized="1"
+     inkscape:current-layer="g218"
+     inkscape:window-maximized="0"
      inkscape:window-y="23"
      inkscape:window-x="0"
-     inkscape:cy="93.527316"
-     inkscape:cx="-122.83002"
-     inkscape:zoom="0.58839639"
+     inkscape:cy="202.11978"
+     inkscape:cx="232.08683"
+     inkscape:zoom="0.93922828"
      showgrid="false"
      id="namedview295"
      inkscape:window-height="800"
@@ -45,7 +45,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -72,26 +72,31 @@
      id="g218">
     <path
        transform="translate(-1.125e-6)"
+       style="fill:#3f3e83;fill-opacity:1"
        d="M 75.339,181.71 H 61.521 v 40.234 h 14.122 v -5.4356 h -8.1788 v -12.7 h 5.5372 v -5.9436 h -5.5372 v -10.77 h 7.874 z"
        id="path208"
        inkscape:connector-curvature="0" />
     <path
        transform="translate(-1.125e-6)"
+       style="fill:#3f3e83;fill-opacity:1"
        d="m 88.856,194.66 c 0,3.1496 -1.4732,4.4704 -3.4036,4.4704 h -1.2192 v -12.04 h 1.2192 c 1.8796,0 3.4036,1.27 3.4036,4.5212 z m 2.7432,7.9248 c 1.9304,-1.6764 3.048,-4.5212 3.048,-8.5852 v -1.7272 c 0,-7.3152 -3.4036,-10.566 -9.1948,-10.566 h -7.1628 v 40.234 h 5.9436 v -17.374 h 1.6764 l 3.302,17.374 h 6.096 z"
        id="path210"
        inkscape:connector-curvature="0" />
     <path
        transform="translate(-1.125e-6)"
+       style="fill:#3f3e83;fill-opacity:1"
        d="m 98.629,181.71 v 40.234 h 5.6896 v -22.352 l 7.4168,22.352 h 4.572 V 181.71 h -5.334 v 19.609 l -6.7056,-19.609 z"
        id="path212"
        inkscape:connector-curvature="0" />
     <path
        transform="translate(-1.125e-6)"
+       style="fill:#3f3e83;fill-opacity:1"
        d="m 120.66,181.71 v 40.234 h 5.9436 V 181.71 Z"
        id="path214"
        inkscape:connector-curvature="0" />
     <path
        transform="translate(-1.125e-6)"
+       style="fill:#3f3e83;fill-opacity:1"
        d="m 144.79,181.71 h -13.818 v 40.234 h 14.122 v -5.4356 h -8.1788 v -12.7 h 5.5372 v -5.9436 h -5.5372 v -10.77 h 7.874 z"
        id="path216"
        inkscape:connector-curvature="0" />
@@ -253,4 +258,11 @@
        sodipodi:nodetypes="ccccccc"
        style="stroke-width:0.912604" />
   </g>
+  <ellipse
+     style="fill:#ffffff;stroke-width:0.271814"
+     id="path560"
+     ry="6.5967283"
+     rx="9.8343363"
+     cy="0.96343768"
+     cx="41.623066" />
 </svg>
