@@ -222,7 +222,9 @@ class BinaryClassifier:
             stop_index = i + batch_size
             stop_index = stop_index if stop_index < sentences_number else sentences_number
             for j in range(i, stop_index):
-                features = self._tokenizer.encode_plus(sentences[j], add_special_tokens=True)
+                features = self._tokenizer.encode_plus(sentences[j],
+                                                       add_special_tokens=True,
+                                                       max_length=self._tokenizer.max_len)
                 input_ids, token_type_ids, attention_mask = features['input_ids'], features['token_type_ids'], features[
                     'attention_mask']
 
