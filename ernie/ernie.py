@@ -10,6 +10,7 @@ from os.path import isdir
 from os import makedirs
 import time
 import json
+from shutil import rmtree
 
 
 class Models:
@@ -268,6 +269,7 @@ class BinaryClassifier:
         temporary_path = f'/tmp/ernie/{int(round(time.time() * 1000))}'
         self.dump(temporary_path)
         self._load_local_model(temporary_path)
+        rmtree(temporary_path)
 
     def _load_remote_model(self, model_name, tokenizer_kwargs, model_kwargs):
         if model_name not in ModelFamilies.Supported:
