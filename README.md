@@ -58,7 +58,7 @@ classifier = BinaryClassifier(model_path='./model')
 
 # Supported Models
 ```python
->>> from ernie import ModelFamilies
->>> print(ModelFamilies.Supported)
+>>> from ernie import ModelsByFamily
+>>> print(ModelsByFamily.Supported)
 {'bert-base-cased', 'xlnet-base-cased', 'roberta-large', 'bert-base-uncased', 'roberta-base', 'bert-large-cased', 'distilbert-base-uncased', 'distilbert-base-multilingual-cased', 'xlnet-large-cased', 'bert-large-uncased'}
 ```

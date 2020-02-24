@@ -28,7 +28,7 @@ class Models:
     DistilBertBaseMultilingualCased = 'distilbert-base-multilingual-cased'
 
 
-class ModelFamilies:
+class ModelsByFamily:
     Bert = set([Models.BertBaseUncased, Models.BertBaseCased, Models.BertLargeUncased, Models.BertLargeCased])
     Roberta = set([Models.RobertaBaseCased, Models.RobertaLargeCased])
     XLNet = set([Models.XLNetBaseCased, Models.XLNetLargeCased])
@@ -37,11 +37,18 @@ class ModelFamilies:
         [getattr(Models, model_type) for model_type in filter(lambda x: x[:2] != '__', Models.__dict__.keys())])
 
 
+class ModelFamilyNames:
+    Bert = 'bert'
+    Roberta = 'roberta'
+    XLNet = 'xlnet'
+    DistilBert = 'distilbert'
+
+
 def get_features(tokenizer, sentences, labels):
     features = []
     for i, sentence in enumerate(sentences):
         inputs = tokenizer.encode_plus(sentence, add_special_tokens=True, max_length=tokenizer.max_len)
-        input_ids, token_type_ids = inputs["input_ids"], inputs["token_type_ids"]
+        input_ids, token_type_ids = inputs['input_ids'], inputs['token_type_ids']
 
         padding_length = tokenizer.max_len - len(input_ids)
 
@@ -216,7 +223,6 @@ class BinaryClassifier:
 
         for i in range(0, sentences_number, batch_size):
             input_ids_list = []
-            token_type_ids_list = []
             attention_mask_list = []
 
             stop_index = i + batch_size
@@ -225,22 +231,17 @@ class BinaryClassifier:
                 features = self._tokenizer.encode_plus(sentences[j],
                                                        add_special_tokens=True,
                                                        max_length=self._tokenizer.max_len)
-                input_ids, token_type_ids, attention_mask = features['input_ids'], features['token_type_ids'], features[
+                input_ids, _, attention_mask = features['input_ids'], features['token_type_ids'], features[
                     'attention_mask']
 
                 input_ids = self._list_to_padded_array(features['input_ids'])
-                token_type_ids = self._list_to_padded_array(features['token_type_ids'])
                 attention_mask = self._list_to_padded_array(features['attention_mask'])
 
                 input_ids_list.append(input_ids)
-                token_type_ids_list.append(token_type_ids)
                 attention_mask_list.append(attention_mask)
 
-            logit_predictions = self._model.predict_on_batch(
-                [np.array(input_ids_list),
-                 np.array(attention_mask_list),
-                 np.array(token_type_ids_list)])
-
+            input_dict = self._get_predict_input(input_ids_list, attention_mask_list)
+            logit_predictions = self._model.predict_on_batch(input_dict)
             yield from ([softmax(logit_prediction) for logit_prediction in logit_predictions[0]])
 
     def dump(self, path):
@@ -261,14 +262,23 @@ class BinaryClassifier:
         self._model = TFAutoModelForSequenceClassification.from_pretrained(path)
         self._tokenizer = AutoTokenizer.from_pretrained(path)
 
+    # The fine-tuned model does not have the same input interface after being
+    # exported and loaded again. The model is reloaded just after fine tuning.
     def _reload_model(self):
-        temporary_path = f'/tmp/ernie/{int(round(time.time() * 1000))}'
+        model_family = self._get_model_family()
+        if model_family == ModelFamilyNames.XLNet:
+            temporary_path = f'/tmp/ernie/{self.model.name}'
+        else:
+            temporary_path = f'/tmp/ernie/{int(round(time.time() * 1000))}'
         self.dump(temporary_path)
         self._load_local_model(temporary_path)
-        rmtree(temporary_path)
+        # Bugfix for XLNet. After reloading the model the cache path of the
+        # "spiece.model" from the tokenizer points to this temporary path.
+        if model_family != ModelFamilyNames.XLNet:
+            rmtree(temporary_path)
 
     def _load_remote_model(self, model_name, tokenizer_kwargs, model_kwargs):
-        if model_name not in ModelFamilies.Supported:
+        if model_name not in ModelsByFamily.Supported:
             raise ValueError(f'Model {model_name} not supported.')
 
         do_lower_case = False
@@ -279,17 +289,25 @@ class BinaryClassifier:
         self._tokenizer = None
         self._model = None
 
-        if model_name in ModelFamilies.Bert:
+        if model_name in ModelsByFamily.Bert:
             self._tokenizer = BertTokenizer.from_pretrained(model_name, **tokenizer_kwargs)
             self._model = TFBertForSequenceClassification.from_pretrained(model_name, **model_kwargs)
-        elif model_name in ModelFamilies.Roberta:
+        elif model_name in ModelsByFamily.Roberta:
             self._tokenizer = RobertaTokenizer.from_pretrained(model_name, **tokenizer_kwargs)
             self._model = TFRobertaForSequenceClassification.from_pretrained(model_name, **model_kwargs)
-        elif model_name in ModelFamilies.XLNet:
+        elif model_name in ModelsByFamily.XLNet:
             self._tokenizer = XLNetTokenizer.from_pretrained(model_name, **tokenizer_kwargs)
             self._model = TFXLNetForSequenceClassification.from_pretrained(model_name, **model_kwargs)
-        elif model_name in ModelFamilies.DistilBert:
+        elif model_name in ModelsByFamily.DistilBert:
             self._tokenizer = DistilBertTokenizer.from_pretrained(model_name, **tokenizer_kwargs)
             self._model = TFDistilBertForSequenceClassification.from_pretrained(model_name, **model_kwargs)
 
         assert self._tokenizer and self._model
+
+    def _get_predict_input(self, input_ids_list, attention_mask_list):
+        input_dict = {'input_ids': np.array(input_ids_list), 'attention_mask': np.array(attention_mask_list)}
+        return input_dict
+
+    def _get_model_family(self):
+        model_family = ''.join(self._model.name[2:].split('_')[:2])
+        return model_family
