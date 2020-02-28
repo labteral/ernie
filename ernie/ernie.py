@@ -10,6 +10,9 @@ from os import makedirs
 import time
 import json
 from shutil import rmtree
+from statistics import mean
+import re
+import logging
 
 
 class Models:
@@ -44,10 +47,110 @@ class ModelFamilyNames:
     DistilBert = 'distilbert'
 
 
+class SplitStrategy:
+    def __init__(self, match_patterns, remove_patterns=None):
+        if not isinstance(match_patterns, list):
+            self.match_patterns = [match_patterns]
+        else:
+            self.match_patterns = match_patterns
+
+        if remove_patterns is not None and not isinstance(remove_patterns, list):
+            self.remove_patterns = [remove_patterns]
+        else:
+            self.remove_patterns = remove_patterns
+
+    def split_sentence(self, text, tokenizer):
+        if self.match_patterns is None:
+            return [text]
+
+        def len_in_tokens(text_):
+            no_tokens = len(tokenizer.encode(text_, add_special_tokens=False))
+            return no_tokens
+
+        logging.disable(logging.WARNING)
+
+        no_special_tokens = len(tokenizer.encode('', add_special_tokens=True))
+        max_tokens = tokenizer.max_len - no_special_tokens
+
+        if self.remove_patterns is not None:
+            for remove_pattern in self.remove_patterns:
+                text = re.sub(remove_pattern, '', text).strip()
+
+        if len_in_tokens(text) <= max_tokens:
+            return [text]
+
+        final_sentences = []
+        new_too_large_sentences = [text]
+        for pattern in self.match_patterns:
+
+            too_large_sentences = new_too_large_sentences
+            new_too_large_sentences = []
+            for too_large_sentence in too_large_sentences:
+
+                sentences = map(lambda x: x.strip(), re.findall(pattern, too_large_sentence))
+                aggregated_sentences = ''
+                for sentence in sentences:
+                    if len_in_tokens(sentence) > max_tokens:
+                        new_too_large_sentences.append(sentence)
+
+                    else:
+                        new_aggregated_sentences = f'{aggregated_sentences} {sentence}'.strip()
+                        if len_in_tokens(new_aggregated_sentences) <= max_tokens:
+                            aggregated_sentences = new_aggregated_sentences
+                        else:
+                            final_sentences.append(aggregated_sentences)
+                            aggregated_sentences = sentence
+
+        # Add the sentences that could not be splitted with the given patterns
+        final_sentences += new_too_large_sentences
+        logging.disable(logging.NOTSET)
+
+        return final_sentences
+
+
+class RegexExpressions:
+    split_by_dot = re.compile(r'[^.]+(?:\.\s*)?')
+    url = re.compile(
+        r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)')
+    domain = re.compile(r'\w+\.\w+')
+
+
+class SplitStrategies:
+    SentencesWithoutUrls = SplitStrategy(match_patterns=RegexExpressions.split_by_dot,
+                                         remove_patterns=[RegexExpressions.url, RegexExpressions.domain])
+
+
+class AggregationStrategy:
+    def __init__(self, method, max_items=None, top_items=False):
+        self.method = method
+        self.max_items = max_items
+        self.top_items = top_items
+
+    def aggregate(self, softmax_tuples):
+        probabilities = [softmax_tuple[1] for softmax_tuple in softmax_tuples]
+        if self.max_items is not None:
+            probabilities = sorted(probabilities, reverse=self.top_items is True)
+            if self.max_items < len(probabilities):
+                probabilities = probabilities[:self.max_items]
+        aggregated_value = self.method(probabilities)
+        return (1 - aggregated_value, aggregated_value)
+
+
+class AggregationStrategies:
+    Mean = AggregationStrategy(method=mean)
+    MeanTop5 = AggregationStrategy(method=mean, max_items=5, top_items=True)
+    MeanTop10 = AggregationStrategy(method=mean, max_items=10, top_items=True)
+    MeanTop15 = AggregationStrategy(method=mean, max_items=15, top_items=True)
+    MeanTop20 = AggregationStrategy(method=mean, max_items=20, top_items=True)
+
+
 def get_features(tokenizer, sentences, labels):
     features = []
     for i, sentence in enumerate(sentences):
+        logging.disable(logging.WARNING)
         inputs = tokenizer.encode_plus(sentence, add_special_tokens=True, max_length=tokenizer.max_len)
+        logging.disable(logging.NOTSET)
+
         input_ids, token_type_ids = inputs['input_ids'], inputs['token_type_ids']
 
         padding_length = tokenizer.max_len - len(input_ids)
@@ -213,36 +316,25 @@ class BinaryClassifier:
 
         self._reload_model()
 
-    def predict_one(self, sentence):
-        return next(self.predict([sentence], batch_size=1))
+    def predict_one(self, text, split_strategy=None, aggregation_strategy=None):
+        return next(
+            self.predict([text], batch_size=1, split_strategy=split_strategy,
+                         aggregation_strategy=aggregation_strategy))
 
-    def predict(self, sentences, batch_size=32):
-        sentences_number = len(sentences)
-        if batch_size > sentences_number:
-            batch_size = sentences_number
+    def predict(self, texts, batch_size=32, split_strategy=None, aggregation_strategy=None):
+        if split_strategy is None:
+            split_strategy = SplitStrategies.SentencesWithoutUrls
 
-        for i in range(0, sentences_number, batch_size):
-            input_ids_list = []
-            attention_mask_list = []
+        if aggregation_strategy is None:
+            aggregation_strategy = AggregationStrategies.Mean
 
-            stop_index = i + batch_size
-            stop_index = stop_index if stop_index < sentences_number else sentences_number
-            for j in range(i, stop_index):
-                features = self._tokenizer.encode_plus(sentences[j],
-                                                       add_special_tokens=True,
-                                                       max_length=self._tokenizer.max_len)
-                input_ids, _, attention_mask = features['input_ids'], features['token_type_ids'], features[
-                    'attention_mask']
+        if split_strategy is None:
+            yield from self._predict_batch(texts, batch_size)
 
-                input_ids = self._list_to_padded_array(features['input_ids'])
-                attention_mask = self._list_to_padded_array(features['attention_mask'])
-
-                input_ids_list.append(input_ids)
-                attention_mask_list.append(attention_mask)
-
-            input_dict = self._get_predict_input(input_ids_list, attention_mask_list)
-            logit_predictions = self._model.predict_on_batch(input_dict)
-            yield from ([softmax(logit_prediction) for logit_prediction in logit_predictions[0]])
+        else:
+            for text in texts:
+                sentences = list(split_strategy.split_sentence(text, self.tokenizer))
+                yield aggregation_strategy.aggregate(self._predict_batch(sentences, batch_size))
 
     def dump(self, path):
         try:
@@ -311,3 +403,35 @@ class BinaryClassifier:
     def _get_model_family(self):
         model_family = ''.join(self._model.name[2:].split('_')[:2])
         return model_family
+
+    def _predict_batch(self, sentences: list, batch_size: int):
+        sentences_number = len(sentences)
+        if batch_size > sentences_number:
+            batch_size = sentences_number
+
+        logging.disable(logging.WARNING)
+
+        for i in range(0, sentences_number, batch_size):
+            input_ids_list = []
+            attention_mask_list = []
+
+            stop_index = i + batch_size
+            stop_index = stop_index if stop_index < sentences_number else sentences_number
+            for j in range(i, stop_index):
+                features = self._tokenizer.encode_plus(sentences[j],
+                                                       add_special_tokens=True,
+                                                       max_length=self._tokenizer.max_len)
+                input_ids, _, attention_mask = features['input_ids'], features['token_type_ids'], features[
+                    'attention_mask']
+
+                input_ids = self._list_to_padded_array(features['input_ids'])
+                attention_mask = self._list_to_padded_array(features['attention_mask'])
+
+                input_ids_list.append(input_ids)
+                attention_mask_list.append(attention_mask)
+
+            input_dict = self._get_predict_input(input_ids_list, attention_mask_list)
+            logit_predictions = self._model.predict_on_batch(input_dict)
+            yield from ([softmax(logit_prediction) for logit_prediction in logit_predictions[0]])
+
+        logging.disable(logging.NOTSET)
