@@ -323,18 +323,23 @@ class BinaryClassifier:
 
     def predict(self, texts, batch_size=32, split_strategy=None, aggregation_strategy=None):
         if split_strategy is None:
-            split_strategy = SplitStrategies.SentencesWithoutUrls
+            yield from self._predict_batch(texts, batch_size)
+            return
 
         if aggregation_strategy is None:
             aggregation_strategy = AggregationStrategies.Mean
 
-        if split_strategy is None:
-            yield from self._predict_batch(texts, batch_size)
+        split_indexes = [0]
+        sentences = []
+        for text in texts:
+            new_sentences = split_strategy.split_sentence(text, self.tokenizer)
+            split_indexes.append(split_indexes[-1] + len(new_sentences))
+            sentences.extend(new_sentences)
 
-        else:
-            for text in texts:
-                sentences = list(split_strategy.split_sentence(text, self.tokenizer))
-                yield aggregation_strategy.aggregate(self._predict_batch(sentences, batch_size))
+        predictions = list(self._predict_batch(sentences, batch_size))
+        for i, split_index in enumerate(split_indexes[:-1]):
+            stop_index = split_indexes[i + 1]
+            yield aggregation_strategy.aggregate(predictions[split_index:stop_index])
 
     def dump(self, path):
         try:
