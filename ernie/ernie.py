@@ -212,17 +212,19 @@ def softmax(values):
     return tuple(map(lambda x: x / exps_sum, exps))
 
 
-class BinaryClassifier:
+class SentenceClassifier:
     def __init__(self,
                  model_name=Models.BertBaseUncased,
                  model_path=None,
                  max_length=128,
+                 labels_no=2,
                  tokenizer_kwargs=None,
                  model_kwargs=None):
         self._loaded_data = False
 
         if model_kwargs is None:
             model_kwargs = {}
+        model_kwargs['num_labels'] = labels_no
 
         if tokenizer_kwargs is None:
             tokenizer_kwargs = {}
@@ -245,12 +247,11 @@ class BinaryClassifier:
         if dataframe is None and csv_path is None:
             raise ValueError
 
-        if dataframe is not None:
-            sentences = list(dataframe[0])
-            labels = dataframe[1].values
-
-        elif csv_path is not None:
+        if csv_path is not None:
             raise NotImplementedError
+
+        sentences = list(dataframe[0])
+        labels = dataframe[1].values
 
         training_sentences, validation_sentences, training_labels, validation_labels = train_test_split(
             sentences, labels, test_size=validation_split, shuffle=True)

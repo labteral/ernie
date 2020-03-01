@@ -4,7 +4,7 @@
 import unittest
 import pandas as pd
 from shutil import rmtree
-from ernie import BinaryClassifier, Models
+from ernie import SentenceClassifier, Models
 
 
 class TestErnie(unittest.TestCase):
@@ -25,7 +25,7 @@ class TestErnie(unittest.TestCase):
         self._test_dump_and_load_model(Models.DistilBertBaseUncased)
 
     def _test_dump_and_load_model(self, model_name):
-        classifier = BinaryClassifier(model_name=model_name)
+        classifier = SentenceClassifier(model_name=model_name)
         classifier.load_dataset(self.df)
         classifier.fine_tune(epochs=1)
 
@@ -33,7 +33,7 @@ class TestErnie(unittest.TestCase):
 
         classifier_path = f'/tmp/ernie/test/{model_name}'
         classifier.dump(classifier_path)
-        classifier = BinaryClassifier(model_path=classifier_path)
+        classifier = SentenceClassifier(model_path=classifier_path)
         rmtree(classifier_path)
 
         second_prediction = classifier.predict_one(self.sentence)

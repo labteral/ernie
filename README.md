@@ -8,7 +8,7 @@
 <p align="center">
     <a href="https://pypi.python.org/pypi/ernie/"><img alt="Downloads" src="https://img.shields.io/pypi/dm/ernie.svg?style=flat-square"></a>
     <a href="https://pypi.python.org/pypi/ernie/"><img alt="PyPi" src="https://img.shields.io/pypi/v/ernie.svg?style=flat-square"></a>
-    <a href="https://github.com/brunneis/ernie/releases"><img alt="GitHub releases" src="https://img.shields.io/github/release/brunneis/ernie.svg?style=flat-square"></a>
+    <!--<a href="https://github.com/brunneis/ernie/releases"><img alt="GitHub releases" src="https://img.shields.io/github/release/brunneis/ernie.svg?style=flat-square"></a>-->
     <a href="https://github.com/brunneis/ernie/blob/master/LICENSE"><img alt="License" src="https://img.shields.io/github/license/brunneis/ernie.svg?style=flat-square&color=blue"></a>
 </p>
 
@@ -26,16 +26,16 @@ pip install ernie
 # Usage
 <a href="https://colab.research.google.com/drive/10lmqZyAHFP_-x4LxIQxZCavYpPqcR28c"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg?style=flat-square"></a>
 
-## Binary Classification
+## Sentence Classification
 ```python
-from ernie import BinaryClassifier, Models
+from ernie import SentenceClassifier, Models
 import pandas as pd
 
 tuples = [("This is a positive example. I'm very happy today.", 1),
           ("This is a negative sentence. Everything was wrong today at work.", 0)]
 
 df = pd.DataFrame(tuples)
-classifier = BinaryClassifier(model_name=Models.BertBaseUncased, max_length=128)
+classifier = SentenceClassifier(model_name=Models.BertBaseUncased, max_length=128, labels_no=2)
 classifier.load_dataset(df, validation_split=0.2)
 classifier.fine_tune(epochs=4, learning_rate=2e-5, training_batch_size=32, validation_batch_size=64)
 
@@ -53,7 +53,7 @@ classifier.dump('./model')
 
 ## Load model
 ```python
-classifier = BinaryClassifier(model_path='./model')
+classifier = SentenceClassifier(model_path='./model')
 ```
 
 # Supported Models
