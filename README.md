@@ -23,7 +23,7 @@
 pip install ernie
 ```
 
-# Usage
+# Fine-Tuning
 <a href="https://colab.research.google.com/drive/10lmqZyAHFP_-x4LxIQxZCavYpPqcR28c"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg?style=flat-square"></a>
 
 ## Sentence Classification
@@ -38,12 +38,47 @@ df = pd.DataFrame(tuples)
 classifier = SentenceClassifier(model_name=Models.BertBaseUncased, max_length=128, labels_no=2)
 classifier.load_dataset(df, validation_split=0.2)
 classifier.fine_tune(epochs=4, learning_rate=2e-5, training_batch_size=32, validation_batch_size=64)
-
-sentence = "Oh, that's great!"
-probabilities = classifier.predict_one(sentence) # It returns a tuple with the prediction
 ```
 
-> You can use `classifier.predict` to predict several sentences at a time. The method will return a generator.
+# Prediction
+## Predict a single text
+```python
+text = "Oh, that's great!"
+
+# It returns a tuple with the prediction
+probabilities = classifier.predict_one(text)
+```
+
+## Predict multiple texts
+```python
+texts = ["Oh, that's great!", "That's really bad"]
+
+# It returns a generator of tuples with the predictions
+probabilities = classifier.predict(texts)
+```
+
+## Prediction Strategies
+If the length in tokens of the texts is greater than the `max_length` with which the model has been fine-tuned, they will be truncated. To avoid losing information you can use a split strategy and aggregate the predictions in different ways.
+
+### Split Strategies
+- `GroupedSentencesWithoutUrls`. The text will be divided in groups of sentences with a lenght in tokens similar to `max_length`.
+
+### Aggregation Strategies
+- `Mean`: the prediction of the text will be the mean of the predictions of the splits.
+- `MeanTop5`: the mean is computed over the 5 higher predictions only.
+- `MeanTop10`: the mean is computed over the 10 higher predictions only.
+- `MeanTop15`: the mean is computed over the 15 higher predictions only.
+- `MeanTop20`: the mean is computed over the 20 higher predictions only.
+
+
+```python
+from ernie import SplitStrategies, AggregationStrategies
+texts = ["Oh, that's great!", "That's really bad"]
+
+probabilities = classifier.predict(texts,
+                                   split_strategy=SplitStrategies.GroupedSentencesWithoutUrls,
+                                   aggregation_strategy=AggregationStrategies.Mean) 
+```
 
 # Save and restore a fine-tuned model
 ## Save model
