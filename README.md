@@ -22,10 +22,9 @@
 ```bash
 pip install ernie
 ```
-
-# Fine-Tuning
 <a href="https://colab.research.google.com/drive/10lmqZyAHFP_-x4LxIQxZCavYpPqcR28c"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg?style=flat-square"></a>
 
+# Fine-Tuning
 ## Sentence Classification
 ```python
 from ernie import SentenceClassifier, Models
