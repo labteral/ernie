@@ -116,8 +116,8 @@ class RegexExpressions:
 
 
 class SplitStrategies:
-    SentencesWithoutUrls = SplitStrategy(match_patterns=RegexExpressions.split_by_dot,
-                                         remove_patterns=[RegexExpressions.url, RegexExpressions.domain])
+    GroupedSentencesWithoutUrls = SplitStrategy(match_patterns=RegexExpressions.split_by_dot,
+                                                remove_patterns=[RegexExpressions.url, RegexExpressions.domain])
 
 
 class AggregationStrategy:
