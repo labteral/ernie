@@ -90,6 +90,21 @@ classifier.dump('./model')
 classifier = SentenceClassifier(model_path='./model')
 ```
 
+# Additional Info
+
+## Accesing the model and tokenizer
+You can directly access both the model and tokenizer objects once the classifier has been instantiated:
+```python
+classifier.model
+classifier.tokenizer
+```
+
+## Keras `model.fit` arguments
+You can pass Keras arguments of the `model.fit` method to the `classifier.fine_tune` method. For example:
+```python
+classifier.fine_tune(class_weight={0: 0.1, 1: 0.1, 2: 0.8})
+```
+
 # Supported Models
 ## BERT
 - `BertBaseUncased`
