@@ -102,7 +102,7 @@ classifier.tokenizer
 ## Keras `model.fit` arguments
 You can pass Keras arguments of the `model.fit` method to the `classifier.fine_tune` method. For example:
 ```python
-classifier.fine_tune(class_weight={0: 0.1, 1: 0.1, 2: 0.8})
+classifier.fine_tune(class_weight={0: 0.2, 1: 0.8})
 ```
 
 # Supported Models
