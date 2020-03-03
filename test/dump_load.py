@@ -5,23 +5,26 @@ import unittest
 import pandas as pd
 from shutil import rmtree
 from ernie import SentenceClassifier, Models
+import logging
 
 
-class TestErnie(unittest.TestCase):
+class TestDumpAndLoad(unittest.TestCase):
+    logging.disable(logging.WARNING)
+
     df = pd.DataFrame([("This is a positive example. I'm very happy today.", 1),
                        ("This is a negative sentence. Everything was wrong today at work.", 0)])
     sentence = "Oh, that's great!"
 
-    def test_dump_and_load_bert(self):
+    def test_bert(self):
         self._test_dump_and_load_model(Models.BertBaseUncased)
 
-    def test_dump_and_load_roberta(self):
+    def test_roberta(self):
         self._test_dump_and_load_model(Models.RobertaBaseCased)
 
-    def test_dump_and_load_xlnet(self):
+    def test_xlnet(self):
         self._test_dump_and_load_model(Models.XLNetBaseCased)
 
-    def test_dump_and_load_distilbert(self):
+    def test_distilbert(self):
         self._test_dump_and_load_model(Models.DistilBertBaseUncased)
 
     def _test_dump_and_load_model(self, model_name):
