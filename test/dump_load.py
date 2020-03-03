@@ -5,12 +5,9 @@ import unittest
 import pandas as pd
 from shutil import rmtree
 from ernie import SentenceClassifier, Models
-import logging
 
 
 class TestDumpAndLoad(unittest.TestCase):
-    logging.disable(logging.WARNING)
-
     df = pd.DataFrame([("This is a positive example. I'm very happy today.", 1),
                        ("This is a negative sentence. Everything was wrong today at work.", 0)])
     sentence = "Oh, that's great!"
