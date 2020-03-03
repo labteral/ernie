@@ -47,27 +47,41 @@ class ModelFamilyNames:
     DistilBert = 'distilbert'
 
 
+class RegexExpressions:
+    split_by_dot = re.compile(r'[^.]+(?:\.\s*)?')
+    split_by_semicolon = re.compile(r'[^;]+(?:\;\s*)?')
+    split_by_colon = re.compile(r'[^:]+(?:\:\s*)?')
+    split_by_comma = re.compile(r'[^,]+(?:\,\s*)?')
+
+    url = re.compile(
+        r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)')
+    domain = re.compile(r'\w+\.\w+')
+
+
 class SplitStrategy:
-    def __init__(self, match_patterns, remove_patterns=None):
-        if not isinstance(match_patterns, list):
-            self.match_patterns = [match_patterns]
+    def __init__(self, split_patterns, remove_patterns=None, group_splits=True, remove_too_short_groups=True):
+        if not isinstance(split_patterns, list):
+            self.split_patterns = [split_patterns]
         else:
-            self.match_patterns = match_patterns
+            self.split_patterns = split_patterns
 
         if remove_patterns is not None and not isinstance(remove_patterns, list):
             self.remove_patterns = [remove_patterns]
         else:
             self.remove_patterns = remove_patterns
 
-    def split_sentence(self, text, tokenizer):
-        if self.match_patterns is None:
-            return [text]
+        self.group_splits = group_splits
+        self.remove_too_short_groups = remove_too_short_groups
+
+    def split(self, text, tokenizer, split_patterns=None):
+        if split_patterns is None:
+            if self.split_patterns is None:
+                return [text]
+            split_patterns = self.split_patterns
 
         def len_in_tokens(text_):
             no_tokens = len(tokenizer.encode(text_, add_special_tokens=False))
             return no_tokens
-
-        logging.disable(logging.WARNING)
 
         no_special_tokens = len(tokenizer.encode('', add_special_tokens=True))
         max_tokens = tokenizer.max_len - no_special_tokens
@@ -79,80 +93,121 @@ class SplitStrategy:
         if len_in_tokens(text) <= max_tokens:
             return [text]
 
-        final_sentences = []
-        new_too_large_sentences = [text]
-        for pattern in self.match_patterns:
+        selected_splits = []
+        splits = map(lambda x: x.strip(), re.findall(split_patterns[0], text))
 
-            too_large_sentences = new_too_large_sentences
-            new_too_large_sentences = []
-            for too_large_sentence in too_large_sentences:
+        aggregated_splits = ''
+        for split in splits:
+            if len_in_tokens(split) > max_tokens:
+                if len(split_patterns) > 1:
+                    sub_splits = self.split(split, tokenizer, split_patterns[1:])
+                    selected_splits.extend(sub_splits)
 
-                sentences = map(lambda x: x.strip(), re.findall(pattern, too_large_sentence))
-                aggregated_sentences = ''
-                for sentence in sentences:
-                    if len_in_tokens(sentence) > max_tokens:
-                        new_too_large_sentences.append(sentence)
+                else:
+                    selected_splits.append(split)
+
+            else:
+                if not self.group_splits:
+                    selected_splits.append(split)
+                    
+                else:
+                    new_aggregated_splits = f'{aggregated_splits} {split}'.strip()
+                    if len_in_tokens(new_aggregated_splits) <= max_tokens:
+                        aggregated_splits = new_aggregated_splits
 
                     else:
-                        new_aggregated_sentences = f'{aggregated_sentences} {sentence}'.strip()
-                        if len_in_tokens(new_aggregated_sentences) <= max_tokens:
-                            aggregated_sentences = new_aggregated_sentences
-                        else:
-                            final_sentences.append(aggregated_sentences)
-                            aggregated_sentences = sentence
+                        selected_splits.append(aggregated_splits)
+                        aggregated_splits = split
 
-        # Add the sentences that could not be splitted with the given patterns
-        final_sentences += new_too_large_sentences
-        logging.disable(logging.NOTSET)
+        if aggregated_splits:
+            selected_splits.append(aggregated_splits)
 
-        return final_sentences
+        remove_too_short_groups = len(selected_splits) > 1 \
+                                  and self.group_splits \
+                                  and self.remove_too_short_groups
 
+        if not remove_too_short_groups:
+            final_splits = selected_splits
+        else:
+            final_splits = []
+            min_length = tokenizer.max_len / 2
+            for split in selected_splits:
+                if len_in_tokens(split) >= min_length:
+                    final_splits.append(split)
 
-class RegexExpressions:
-    split_by_dot = re.compile(r'[^.]+(?:\.\s*)?')
-    url = re.compile(
-        r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)')
-    domain = re.compile(r'\w+\.\w+')
+        return final_splits
 
 
 class SplitStrategies:
-    GroupedSentencesWithoutUrls = SplitStrategy(match_patterns=RegexExpressions.split_by_dot,
-                                                remove_patterns=[RegexExpressions.url, RegexExpressions.domain])
+    SentencesWithoutUrls = SplitStrategy(split_patterns=[
+        RegexExpressions.split_by_dot, RegexExpressions.split_by_semicolon, RegexExpressions.split_by_colon,
+        RegexExpressions.split_by_comma
+    ],
+                                         remove_patterns=[RegexExpressions.url, RegexExpressions.domain],
+                                         remove_too_short_groups=False,
+                                         group_splits=False)
+
+    GroupedSentencesWithoutUrls = SplitStrategy(split_patterns=[
+        RegexExpressions.split_by_dot, RegexExpressions.split_by_semicolon, RegexExpressions.split_by_colon,
+        RegexExpressions.split_by_comma
+    ],
+                                                remove_patterns=[RegexExpressions.url, RegexExpressions.domain],
+                                                remove_too_short_groups=True,
+                                                group_splits=True)
 
 
 class AggregationStrategy:
-    def __init__(self, method, max_items=None, top_items=False):
+    def __init__(self, method, max_items=None, top_items=True, sorting_class_index=1):
         self.method = method
         self.max_items = max_items
         self.top_items = top_items
+        self.sorting_class_index = sorting_class_index
 
     def aggregate(self, softmax_tuples):
-        probabilities = [softmax_tuple[1] for softmax_tuple in softmax_tuples]
+        softmax_dicts = []
+        for softmax_tuple in softmax_tuples:
+            softmax_dict = {}
+            for i, probability in enumerate(softmax_tuple):
+                softmax_dict[i] = probability
+            softmax_dicts.append(softmax_dict)
+
         if self.max_items is not None:
-            probabilities = sorted(probabilities, reverse=self.top_items is True)
-            if self.max_items < len(probabilities):
-                probabilities = probabilities[:self.max_items]
-        aggregated_value = self.method(probabilities)
-        return (1 - aggregated_value, aggregated_value)
+            softmax_dicts = sorted(softmax_dicts, key=lambda x: x[self.sorting_class_index], reverse=self.top_items)
+            if self.max_items < len(softmax_dicts):
+                softmax_dicts = softmax_dicts[:self.max_items]
+
+        softmax_list = []
+        for key in softmax_dicts[0].keys():
+            softmax_list.append(self.method([probabilities[key] for probabilities in softmax_dicts]))
+        softmax_tuple = tuple(softmax_list)
+        return softmax_tuple
 
 
 class AggregationStrategies:
     Mean = AggregationStrategy(method=mean)
-    MeanTop5 = AggregationStrategy(method=mean, max_items=5, top_items=True)
-    MeanTop10 = AggregationStrategy(method=mean, max_items=10, top_items=True)
-    MeanTop15 = AggregationStrategy(method=mean, max_items=15, top_items=True)
-    MeanTop20 = AggregationStrategy(method=mean, max_items=20, top_items=True)
+    MeanTopFiveBinaryClassification = AggregationStrategy(method=mean,
+                                                          max_items=5,
+                                                          top_items=True,
+                                                          sorting_class_index=1)
+    MeanTopTenBinaryClassification = AggregationStrategy(method=mean,
+                                                         max_items=10,
+                                                         top_items=True,
+                                                         sorting_class_index=1)
+    MeanTopFifteenBinaryClassification = AggregationStrategy(method=mean,
+                                                             max_items=15,
+                                                             top_items=True,
+                                                             sorting_class_index=1)
+    MeanTopTwentyBinaryClassification = AggregationStrategy(method=mean,
+                                                            max_items=20,
+                                                            top_items=True,
+                                                            sorting_class_index=1)
 
 
 def get_features(tokenizer, sentences, labels):
     features = []
     for i, sentence in enumerate(sentences):
-        logging.disable(logging.WARNING)
         inputs = tokenizer.encode_plus(sentence, add_special_tokens=True, max_length=tokenizer.max_len)
-        logging.disable(logging.NOTSET)
-
         input_ids, token_type_ids = inputs['input_ids'], inputs['token_type_ids']
-
         padding_length = tokenizer.max_len - len(input_ids)
 
         if tokenizer.padding_side == 'right':
@@ -256,12 +311,15 @@ class SentenceClassifier:
         training_sentences, validation_sentences, training_labels, validation_labels = train_test_split(
             sentences, labels, test_size=validation_split, shuffle=True)
 
+        logging.disable(logging.WARNING)
         self._training_features = get_features(self._tokenizer, training_sentences, training_labels)
         self._training_size = len(training_sentences)
-        logging.info(f'training_size: {self._training_size}')
 
         self._validation_features = get_features(self._tokenizer, validation_sentences, validation_labels)
         self._validation_split = len(validation_sentences)
+        logging.disable(logging.NOTSET)
+
+        logging.info(f'training_size: {self._training_size}')
         logging.info(f'validation_split: {self._validation_split}')
 
         self._loaded_data = True
@@ -325,22 +383,25 @@ class SentenceClassifier:
     def predict(self, texts, batch_size=32, split_strategy=None, aggregation_strategy=None):
         if split_strategy is None:
             yield from self._predict_batch(texts, batch_size)
-            return
 
-        if aggregation_strategy is None:
-            aggregation_strategy = AggregationStrategies.Mean
+        else:
+            if aggregation_strategy is None:
+                aggregation_strategy = AggregationStrategies.Mean
 
-        split_indexes = [0]
-        sentences = []
-        for text in texts:
-            new_sentences = split_strategy.split_sentence(text, self.tokenizer)
-            split_indexes.append(split_indexes[-1] + len(new_sentences))
-            sentences.extend(new_sentences)
+            split_indexes = [0]
+            sentences = []
+            for text in texts:
+                logging.disable(logging.WARNING)
+                new_sentences = split_strategy.split(text, self.tokenizer)
+                logging.disable(logging.NOTSET)
 
-        predictions = list(self._predict_batch(sentences, batch_size))
-        for i, split_index in enumerate(split_indexes[:-1]):
-            stop_index = split_indexes[i + 1]
-            yield aggregation_strategy.aggregate(predictions[split_index:stop_index])
+                split_indexes.append(split_indexes[-1] + len(new_sentences))
+                sentences.extend(new_sentences)
+
+            predictions = list(self._predict_batch(sentences, batch_size))
+            for i, split_index in enumerate(split_indexes[:-1]):
+                stop_index = split_indexes[i + 1]
+                yield aggregation_strategy.aggregate(predictions[split_index:stop_index])
 
     def dump(self, path):
         try:
@@ -415,8 +476,6 @@ class SentenceClassifier:
         if batch_size > sentences_number:
             batch_size = sentences_number
 
-        logging.disable(logging.WARNING)
-
         for i in range(0, sentences_number, batch_size):
             input_ids_list = []
             attention_mask_list = []
@@ -439,5 +498,3 @@ class SentenceClassifier:
             input_dict = self._get_predict_input(input_ids_list, attention_mask_list)
             logit_predictions = self._model.predict_on_batch(input_dict)
             yield from ([softmax(logit_prediction) for logit_prediction in logit_predictions[0]])
-
-        logging.disable(logging.NOTSET)
