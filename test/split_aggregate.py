@@ -18,7 +18,6 @@ def round_tuple_of_floats(tuple_):
 
 class TestSplitAggregate(unittest.TestCase):
     logging.disable(logging.WARNING)
-
     classifier = SentenceClassifier(model_name=Models.BertBaseUncased, max_length=128)
 
     def test_aggregate_two_classes(self):
