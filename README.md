@@ -80,7 +80,7 @@ probabilities = classifier.predict(texts,
 ```
 
 
-> You can define your custom strategies through `AggregationStrategy` and `SplitStrategy` classes.
+You can define your custom strategies through `AggregationStrategy` and `SplitStrategy` classes.
 ```python
 from ernie import SplitStrategy, AggregationStrategy
 
