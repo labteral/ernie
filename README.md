@@ -61,7 +61,7 @@ If the length in tokens of the texts is greater than the `max_length` with which
 
 ### Split Strategies
 - `SentencesWithoutUrls`. The text will be splitted in sentences.
-- `GroupedSentencesWithoutUrls`. The text will be splitted in groups of sentences with a lenght in tokens similar to `max_length`.
+- `GroupedSentencesWithoutUrls`. The text will be splitted in groups of sentences with a length in tokens similar to `max_length`.
 
 ### Aggregation Strategies
 - `Mean`: the prediction of the text will be the mean of the predictions of the splits.
