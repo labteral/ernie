@@ -56,6 +56,39 @@ texts = ["Oh, that's great!", "That's really bad"]
 probabilities = classifier.predict(texts)
 ```
 
+## Prediction Strategies
+If the length in tokens of the texts is greater than the `max_length` with which the model has been fine-tuned, they will be truncated. To avoid losing information you can use a split strategy and aggregate the predictions in different ways.
+
+### Split Strategies
+- `SentencesWithoutUrls`. The text will be splitted in sentences.
+- `GroupedSentencesWithoutUrls`. The text will be splitted in groups of sentences with a lenght in tokens similar to `max_length`.
+
+### Aggregation Strategies
+- `Mean`: the prediction of the text will be the mean of the predictions of the splits.
+- `MeanTopFiveBinaryClassification`: the mean is computed over the 5 higher predictions only.
+- `MeanTopTenBinaryClassification`: the mean is computed over the 10 higher predictions only.
+- `MeanTopFifteenBinaryClassification`: the mean is computed over the 15 higher predictions only.
+- `MeanTopTwentyBinaryClassification`: the mean is computed over the 20 higher predictions only.
+
+```python
+from ernie import SplitStrategies, AggregationStrategies
+
+texts = ["Oh, that's great!", "That's really bad"]
+probabilities = classifier.predict(texts,
+                                   split_strategy=SplitStrategies.GroupedSentencesWithoutUrls,
+                                   aggregation_strategy=AggregationStrategies.Mean) 
+```
+
+
+> You can define your custom strategies through `AggregationStrategy` and `SplitStrategy` classes.
+```python
+from ernie import SplitStrategy, AggregationStrategy
+
+my_split_strategy = SplitStrategy(split_patterns: list, remove_patterns: list, remove_too_short_groups: bool, group_splits: bool)
+my_aggregation_strategy = AggregationStrategy(method: function, max_items: int, top_items: bool, sorting_class_index: int)
+```
+
+
 
 # Save and restore a fine-tuned model
 ## Save model
