@@ -2,11 +2,13 @@
 # -*- coding: utf-8 -*-
 
 from .ernie import *
+from tensorflow.python.client import device_lib
 import logging
 
-__version__ = '0.0.21b0'
+__version__ = '0.0.22b0'
 
 logging.getLogger().setLevel(logging.WARNING)
+logging.getLogger("transformers.tokenization_utils").setLevel(logging.ERROR)
 logging.basicConfig(format='%(asctime)-15s [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 
@@ -18,7 +20,6 @@ def _get_cpu_name():
 
 
 def _get_gpu_name():
-    from tensorflow.python.client import device_lib
     gpu_name = device_lib.list_local_devices()[3].physical_device_desc.split(',')[1].split('name:')[1].strip()
     return gpu_name
 

@@ -64,15 +64,11 @@ class SentenceClassifier:
         training_sentences, validation_sentences, training_labels, validation_labels = train_test_split(
             sentences, labels, test_size=validation_split, shuffle=True)
 
-        logging.disable(logging.WARNING)
-
         self._training_features = get_features(self._tokenizer, training_sentences, training_labels)
         self._training_size = len(training_sentences)
 
         self._validation_features = get_features(self._tokenizer, validation_sentences, validation_labels)
         self._validation_split = len(validation_sentences)
-
-        logging.disable(logging.NOTSET)
 
         logging.info(f'training_size: {self._training_size}')
         logging.info(f'validation_split: {self._validation_split}')
@@ -136,7 +132,6 @@ class SentenceClassifier:
                          aggregation_strategy=aggregation_strategy))
 
     def predict(self, texts, batch_size=32, split_strategy=None, aggregation_strategy=None):
-        logging.disable(logging.WARNING)
         if split_strategy is None:
             yield from self._predict_batch(texts, batch_size)
 
@@ -157,8 +152,6 @@ class SentenceClassifier:
             for i, split_index in enumerate(split_indexes[:-1]):
                 stop_index = split_indexes[i + 1]
                 yield aggregation_strategy.aggregate(predictions[split_index:stop_index])
-
-        logging.disable(logging.NOTSET)
 
     def dump(self, path):
         try:
