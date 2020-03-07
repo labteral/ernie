@@ -19,6 +19,7 @@
 [![](https://sourcerer.io/fame/brunneis/brunneis/ernie/images/0)](https://sourcerer.io/fame/brunneis/brunneis/ernie/links/0)[![](https://sourcerer.io/fame/brunneis/brunneis/ernie/images/1)](https://sourcerer.io/fame/brunneis/brunneis/ernie/links/1)[![](https://sourcerer.io/fame/brunneis/brunneis/ernie/images/2)](https://sourcerer.io/fame/brunneis/brunneis/ernie/links/2)[![](https://sourcerer.io/fame/brunneis/brunneis/ernie/images/3)](https://sourcerer.io/fame/brunneis/brunneis/ernie/links/3)[![](https://sourcerer.io/fame/brunneis/brunneis/ernie/images/4)](https://sourcerer.io/fame/brunneis/brunneis/ernie/links/4)[![](https://sourcerer.io/fame/brunneis/brunneis/ernie/images/5)](https://sourcerer.io/fame/brunneis/brunneis/ernie/links/5)[![](https://sourcerer.io/fame/brunneis/brunneis/ernie/images/6)](https://sourcerer.io/fame/brunneis/brunneis/ernie/links/6)[![](https://sourcerer.io/fame/brunneis/brunneis/ernie/images/7)](https://sourcerer.io/fame/brunneis/brunneis/ernie/links/7)
 
 # Installation
+> Ernie requires Python 3.6 or higher.
 ```bash
 pip install ernie
 ```
