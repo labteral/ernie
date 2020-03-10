@@ -1,7 +1,7 @@
 
 <p align="center">
     <br>
-    <img src="misc/logo.svg" alt="Bernie Logo" width="150"/>
+    <img src="misc/ernie-logo.svg" alt="Bernie Logo" width="150"/>
     <br>
 <p>
 
@@ -135,3 +135,11 @@ classifier.fine_tune(class_weight={0: 0.2, 1: 0.8})
 ## DistilBERT
 - `DistilBertBaseUncased`
 - `DistilBertBaseMultilingualCased`
+
+<br>
+<br>
+
+# Sponsors
+|||
+|-|-|
+|<a href="http://stickermule.com/supports/ernie20-sponsorship"><img src="misc/stickermule-logo.svg" alt="Sticker Mule Logo" width="150"/></a>|**_Custom stickers that kick ass_**|
