@@ -3,6 +3,8 @@
 
 from tensorflow import data, TensorShape, int64, int32
 from math import exp
+from os import makedirs
+from shutil import rmtree, move
 
 
 def get_features(tokenizer, sentences, labels):
@@ -68,3 +70,18 @@ def softmax(values):
     exps = [exp(value) for value in values]
     exps_sum = sum(exp_value for exp_value in exps)
     return tuple(map(lambda x: x / exps_sum, exps))
+
+
+def remove_dir(path):
+    rmtree(path)
+
+
+def make_dir(path):
+    try:
+        makedirs(path)
+    except FileExistsError:
+        pass
+
+
+def move_dir(source_path, target_path):
+    move(source_path, target_path)

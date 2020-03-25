@@ -3,8 +3,7 @@
 
 import unittest
 import pandas as pd
-from shutil import rmtree
-from ernie import SentenceClassifier, Models
+from ernie import SentenceClassifier, Models, remove_dir
 
 
 class TestDumpAndLoad(unittest.TestCase):
@@ -34,7 +33,7 @@ class TestDumpAndLoad(unittest.TestCase):
         classifier_path = f'/tmp/ernie/test/{model_name}'
         classifier.dump(classifier_path)
         classifier = SentenceClassifier(model_path=classifier_path)
-        rmtree(classifier_path)
+        remove_dir(classifier_path)
 
         second_prediction = classifier.predict_one(self.sentence)
 

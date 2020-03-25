@@ -3,32 +3,33 @@
 
 import tensorflow as tf
 import numpy as np
-from transformers import (AutoTokenizer, TFAutoModelForSequenceClassification, BertTokenizer,
-                          TFBertForSequenceClassification, RobertaTokenizer, TFRobertaForSequenceClassification,
-                          XLNetTokenizer, TFXLNetForSequenceClassification, DistilBertTokenizer,
-                          TFDistilBertForSequenceClassification)
+from transformers import (
+    AutoTokenizer,
+    AutoModel,
+    TFAutoModelForSequenceClassification,
+)
 from tensorflow import keras
 from sklearn.model_selection import train_test_split
-from os import makedirs
-import time
-from shutil import rmtree
 import logging
-
-from .models import Models, ModelsByFamily, ModelFamilyNames
+import time
+from .models import Models, ModelsByFamily
 from .split_strategies import SplitStrategy, SplitStrategies, RegexExpressions
 from .aggregation_strategies import AggregationStrategy, AggregationStrategies
-from .helper import get_features, softmax
+from .helper import (get_features, softmax, remove_dir, make_dir, move_dir)
+
+AUTOSAVE_PATH = './ernie-autosave/'
 
 
 class SentenceClassifier:
     def __init__(self,
                  model_name=Models.BertBaseUncased,
                  model_path=None,
-                 max_length=128,
+                 max_length=64,
                  labels_no=2,
                  tokenizer_kwargs=None,
                  model_kwargs=None):
         self._loaded_data = False
+        self._temporary_path = None
 
         if model_kwargs is None:
             model_kwargs = {}
@@ -124,6 +125,8 @@ class SentenceClassifier:
                         validation_steps=validation_steps,
                         **kwargs)
 
+        # The fine-tuned model does not have the same input interface after being
+        # exported and loaded again.
         self._reload_model()
 
     def predict_one(self, text, split_strategy=None, aggregation_strategy=None):
@@ -154,10 +157,10 @@ class SentenceClassifier:
                 yield aggregation_strategy.aggregate(predictions[split_index:stop_index])
 
     def dump(self, path):
-        try:
-            makedirs(path)
-        except FileExistsError:
-            pass
+        move_dir(self._temporary_path, path)
+
+    def _dump(self, path):
+        make_dir(path)
         self._model.save_pretrained(path)
         self._tokenizer.save_pretrained(path)
 
@@ -195,28 +198,25 @@ class SentenceClassifier:
         padded_array[:array.shape[0]] = array
         return padded_array
 
-    def _load_local_model(self, path):
-        self._model = TFAutoModelForSequenceClassification.from_pretrained(path)
-        self._tokenizer = AutoTokenizer.from_pretrained(path)
+    def _get_temporary_path(self, name=''):
+        return f'{AUTOSAVE_PATH}{name}/{int(round(time.time() * 1000))}'
 
-    # The fine-tuned model does not have the same input interface after being
-    # exported and loaded again. The model is reloaded just after fine tuning.
     def _reload_model(self):
-        model_family = self._get_model_family()
-        if model_family == ModelFamilyNames.XLNet:
-            temporary_path = f'/tmp/ernie/{self.model.name}'
-        else:
-            temporary_path = f'/tmp/ernie/{int(round(time.time() * 1000))}'
-        self.dump(temporary_path)
-        self._load_local_model(temporary_path)
-        # Bugfix for XLNet. After reloading the model the cache path of the
-        # "spiece.model" from the tokenizer points to this temporary path.
-        if model_family != ModelFamilyNames.XLNet:
-            rmtree(temporary_path)
+        self._temporary_path = self._get_temporary_path(name=self._model.name)
+        self._dump(self._temporary_path)
+        self._load_local_model(self._temporary_path)
 
-    def _load_remote_model(self, model_name, tokenizer_kwargs, model_kwargs):
-        if model_name not in ModelsByFamily.Supported:
-            raise ValueError(f'Model {model_name} not supported.')
+    def _load_local_model(self, model_path):
+        self._tokenizer = AutoTokenizer.from_pretrained(model_path)
+        self._model = TFAutoModelForSequenceClassification.from_pretrained(model_path, from_pt=False)
+
+    def _get_model_family(self):
+        model_family = ''.join(self._model.name[2:].split('_')[:2])
+        return model_family
+
+    def _load_remote_model(self, model_name, tokenizer_kwargs=None, model_kwargs=None):
+        if tokenizer_kwargs is None:
+            tokenizer_kwargs = {}
 
         do_lower_case = False
         if 'uncased' in model_name.lower():
@@ -226,21 +226,31 @@ class SentenceClassifier:
         self._tokenizer = None
         self._model = None
 
-        if model_name in ModelsByFamily.Bert:
-            self._tokenizer = BertTokenizer.from_pretrained(model_name, **tokenizer_kwargs)
-            self._model = TFBertForSequenceClassification.from_pretrained(model_name, **model_kwargs)
-        elif model_name in ModelsByFamily.Roberta:
-            self._tokenizer = RobertaTokenizer.from_pretrained(model_name, **tokenizer_kwargs)
-            self._model = TFRobertaForSequenceClassification.from_pretrained(model_name, **model_kwargs)
-        elif model_name in ModelsByFamily.XLNet:
-            self._tokenizer = XLNetTokenizer.from_pretrained(model_name, **tokenizer_kwargs)
-            self._model = TFXLNetForSequenceClassification.from_pretrained(model_name, **model_kwargs)
-        elif model_name in ModelsByFamily.DistilBert:
-            self._tokenizer = DistilBertTokenizer.from_pretrained(model_name, **tokenizer_kwargs)
-            self._model = TFDistilBertForSequenceClassification.from_pretrained(model_name, **model_kwargs)
+        self._tokenizer = AutoTokenizer.from_pretrained(model_name, **tokenizer_kwargs)
 
+        temporary_path = self._get_temporary_path()
+        make_dir(temporary_path)
+
+        # TensorFlow model
+        try:
+            self._model = TFAutoModelForSequenceClassification.from_pretrained(model_name, from_pt=False)
+
+        # PyTorch model
+        except TypeError:
+            try:
+                self._model = TFAutoModelForSequenceClassification.from_pretrained(model_name, from_pt=True)
+
+            # Loading a TF model from a PyTorch checkpoint is not supported when using a model identifier name
+            except OSError:
+                model = AutoModel.from_pretrained(model_name)
+                model.save_pretrained(temporary_path)
+                self._model = TFAutoModelForSequenceClassification.from_pretrained(temporary_path, from_pt=True)
+
+        # Reset base model if the number of labels does not match
+        if model_kwargs and self._model.config.num_labels != model_kwargs['num_labels']:
+            self._model.config.__dict__.update(model_kwargs)
+            getattr(self._model, self._get_model_family()).save_pretrained(temporary_path)
+            self._model = TFAutoModelForSequenceClassification.from_pretrained(temporary_path, from_pt=False)
+
+        remove_dir(temporary_path)
         assert self._tokenizer and self._model
-
-    def _get_model_family(self):
-        model_family = ''.join(self._model.name[2:].split('_')[:2])
-        return model_family
