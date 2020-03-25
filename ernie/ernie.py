@@ -214,10 +214,7 @@ class SentenceClassifier:
         model_family = ''.join(self._model.name[2:].split('_')[:2])
         return model_family
 
-    def _load_remote_model(self, model_name, tokenizer_kwargs=None, model_kwargs=None):
-        if tokenizer_kwargs is None:
-            tokenizer_kwargs = {}
-
+    def _load_remote_model(self, model_name, tokenizer_kwargs, model_kwargs):
         do_lower_case = False
         if 'uncased' in model_name.lower():
             do_lower_case = True
@@ -247,7 +244,7 @@ class SentenceClassifier:
                 self._model = TFAutoModelForSequenceClassification.from_pretrained(temporary_path, from_pt=True)
 
         # Reset base model if the number of labels does not match
-        if model_kwargs and self._model.config.num_labels != model_kwargs['num_labels']:
+        if self._model.config.num_labels != model_kwargs['num_labels']:
             self._model.config.__dict__.update(model_kwargs)
             getattr(self._model, self._get_model_family()).save_pretrained(temporary_path)
             self._model = TFAutoModelForSequenceClassification.from_pretrained(temporary_path, from_pt=False)
