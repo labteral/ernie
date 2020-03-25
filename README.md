@@ -119,7 +119,7 @@ classifier.fine_tune(class_weight={0: 0.2, 1: 0.8})
 
 # Supported Models
 
-You can access some of the official base model names through the `Models` class. However, you can directly type the HuggingFace's model name such as `bert-base-uncased` or `clue/albert_chinese_small` when instantiating a `SentenceClassifier`.
+You can access some of the official base model names through the `Models` class. However, you can directly type the HuggingFace's model name such as `bert-base-uncased` or `bert-base-chinese` when instantiating a `SentenceClassifier`.
 
 ## BERT
 - `BertBaseUncased`
