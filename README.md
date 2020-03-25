@@ -35,7 +35,7 @@ tuples = [("This is a positive example. I'm very happy today.", 1),
           ("This is a negative sentence. Everything was wrong today at work.", 0)]
 
 df = pd.DataFrame(tuples)
-classifier = SentenceClassifier(model_name=Models.BertBaseUncased, max_length=128, labels_no=2)
+classifier = SentenceClassifier(model_name=Models.BertBaseUncased, max_length=64, labels_no=2)
 classifier.load_dataset(df, validation_split=0.2)
 classifier.fine_tune(epochs=4, learning_rate=2e-5, training_batch_size=32, validation_batch_size=64)
 ```
@@ -118,6 +118,9 @@ classifier.fine_tune(class_weight={0: 0.2, 1: 0.8})
 ```
 
 # Supported Models
+
+You can access some of the official base model names through the `Models` class. However, you can directly type the HuggingFace's model name such as `bert-base-uncased` or `clue/albert_chinese_small` when instantiating a `SentenceClassifier`.
+
 ## BERT
 - `BertBaseUncased`
 - `BertBaseCased`
@@ -135,6 +138,19 @@ classifier.fine_tune(class_weight={0: 0.2, 1: 0.8})
 ## DistilBERT
 - `DistilBertBaseUncased`
 - `DistilBertBaseMultilingualCased`
+
+## ALBERT
+- `AlbertBaseCased`
+- `AlbertLargeCased`
+- `AlbertXLargeCased`
+- `AlbertXXLargeCased`
+- `AlbertBaseCased2`
+- `AlbertLargeCased2`
+- `AlbertXLargeCased2`
+- `AlbertXXLargeCased2`
+
+## More
+See other available models at [huggingface.co/models](https://huggingface.co/models).
 
 <br>
 <br>
