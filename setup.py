@@ -29,5 +29,5 @@ setup(
     install_requires=['transformers==2.4.1',
                       'scikit-learn>=0.22.1',
                       'pandas>=0.25.3',
-                      'tensorflow>=2.1.0',
+                      'tensorflow>=2.1.0,!=2.2.0-rc0,!=2.2.0rc1',
                       'py-cpuinfo==5.0.0'])
