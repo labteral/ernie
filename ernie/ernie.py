@@ -245,9 +245,12 @@ class SentenceClassifier:
 
         # Reset base model if the number of labels does not match
         if self._model.config.num_labels != model_kwargs['num_labels']:
-            self._model.config.__dict__.update(model_kwargs)
-            getattr(self._model, self._get_model_family()).save_pretrained(temporary_path)
-            self._model = TFAutoModelForSequenceClassification.from_pretrained(temporary_path, from_pt=False)
+            model_family = self._get_model_family()
+            try:
+                getattr(self._model, self._get_model_family()).save_pretrained(temporary_path)
+                self._model = self._model.__class__.from_pretrained(temporary_path, from_pt=False, **model_kwargs)
+            except AttributeError:
+                self._model = self._model.__class__.from_pretrained(model_name, **model_kwargs)
 
         remove_dir(temporary_path)
         assert self._tokenizer and self._model
