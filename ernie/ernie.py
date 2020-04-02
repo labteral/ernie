@@ -243,14 +243,34 @@ class SentenceClassifier:
                 model.save_pretrained(temporary_path)
                 self._model = TFAutoModelForSequenceClassification.from_pretrained(temporary_path, from_pt=True)
 
-        # Reset base model if the number of labels does not match
-        if self._model.config.num_labels != model_kwargs['num_labels']:
+        # Clean the model's last layer if the provided properties are different
+        clean_last_layer = False
+        for key, value in model_kwargs.items():
+            if not hasattr(self._model.config, key):
+                clean_last_layer = True
+                break
+
+            if getattr(self._model.config, key) != value:
+                clean_last_layer = True
+                break
+
+        if clean_last_layer:
             model_family = self._get_model_family()
             try:
                 getattr(self._model, self._get_model_family()).save_pretrained(temporary_path)
                 self._model = self._model.__class__.from_pretrained(temporary_path, from_pt=False, **model_kwargs)
+
+            # The model is itself the main layer
             except AttributeError:
-                self._model = self._model.__class__.from_pretrained(model_name, **model_kwargs)
+                # TensorFlow model
+                try:
+                    self._model = self._model.__class__.from_pretrained(model_name, from_pt=False, **model_kwargs)
+
+                # PyTorch Model
+                except TypeError:
+                    model = AutoModel.from_pretrained(model_name)
+                    model.save_pretrained(temporary_path)
+                    self._model = self._model.__class__.from_pretrained(temporary_path, from_pt=True, **model_kwargs)
 
         remove_dir(temporary_path)
         assert self._tokenizer and self._model
