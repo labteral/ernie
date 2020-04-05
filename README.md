@@ -1,6 +1,6 @@
 <p align="center">
     <br>
-    <a href="https://github.com/brunneis/ernie/blob/master/README.md#stickers" alt="Stickers section"><img src="misc/ernie-sticker-diecut.png" alt="Bernie Logo" width="150"/></a>
+    <a href="https://github.com/brunneis/ernie#stickers-by-sticker-mule" alt="Stickers section"><img src="misc/ernie-sticker-diecut.png" alt="Bernie Logo" width="150"/></a>
     <br>
 <p>
 
@@ -155,7 +155,7 @@ You can access some of the official base model names through the `Models` class.
 # Stickers by Sticker Mule
 <span>
 <img src="misc/ernie-sticker-diecut.png" alt="Sticker Mule Logo" width="100"/>
-&nbsp;
+&nbsp;&nbsp;
 <img src="misc/ernie-sticker-holographic.png" alt="Sticker Mule Logo" width="100"/>
 </span>
 
