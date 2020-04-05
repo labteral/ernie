@@ -156,11 +156,11 @@ You can access some of the official base model names through the `Models` class.
 
 # Stickers
 <span>
-<img src="misc/ernie-sticker-diecut.png" alt="Sticker Mule Logo" width="150"/>
-<img src="misc/ernie-sticker-holographic.png" alt="Sticker Mule Logo" width="150"/>
+<img src="misc/ernie-sticker-diecut.png" alt="Sticker Mule Logo" width="100"/>
+<img src="misc/ernie-sticker-holographic.png" alt="Sticker Mule Logo" width="100"/>
 </span>
 
-Want to get some cool stickers? Star this GitHub repo and complete at least one of the following tasks: 
+Want to get some cool stickers? ⭐**Star this GitHub repo** and complete at least one of the following tasks: 
 - Explain why you like `ernie` on Twitter and follow [@ernie_python](https://twitter.com/ernie_python).
 - Share a Kaggle notebook with a not-seen-before example using `ernie`.
 - Share a Google Colab notebook with a not-seen-before example using `ernie`.
