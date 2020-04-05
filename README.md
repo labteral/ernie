@@ -159,11 +159,12 @@ You can access some of the official base model names through the `Models` class.
 <img src="misc/ernie-sticker-holographic.png" alt="Sticker Mule Logo" width="100px"/>
 </span>
 
-Want to get some cool stickers? ⭐**Star this GitHub repo** and complete at least one of the following tasks: 
+Do you want to get some cool stickers? ⭐**Star this GitHub repo** and complete at least one of the following tasks: 
 - Explain why you like `ernie` on Twitter and follow [@ernie_python](https://twitter.com/ernie_python).
 - Share a Kaggle notebook with a not-seen-before example using `ernie`.
 - Share a Google Colab notebook with a not-seen-before example using `ernie`.
 
 > Send me the proof and your postal details at `dev` [at] `brunneis.com` and I will send you the stickers 🤗
 
-<a href="http://stickermule.com/supports/ernie20-sponsorship"><img src="misc/stickermule-logo.svg" alt="Sticker Mule Logo" height="70px"/></a>
+<br>
+<a href="http://stickermule.com/supports/ernie20-sponsorship"><img src="misc/stickermule-logo.png" alt="Sticker Mule Logo" width="100px"/></a>
