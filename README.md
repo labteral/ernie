@@ -1,7 +1,7 @@
 
 <p align="center">
     <br>
-    <img src="misc/ernie-logo.svg" alt="Bernie Logo" width="150"/>
+    <a href="#stickers" alt="Stickers section"><img src="misc/ernie-sticker-diecut.png" alt="Bernie Logo" width="150"/></a>
     <br>
 <p>
 
@@ -155,8 +155,10 @@ You can access some of the official base model names through the `Models` class.
 
 
 # Stickers
+<span>
 <img src="misc/ernie-sticker-diecut.png" alt="Sticker Mule Logo" width="150"/>
 <img src="misc/ernie-sticker-holographic.png" alt="Sticker Mule Logo" width="150"/>
+</span>
 
 Want to get some cool stickers? Star this GitHub repo and complete at least one of the following tasks: 
 - Explain why you like `ernie` on Twitter and follow [@ernie_python](https://twitter.com/ernie_python).
