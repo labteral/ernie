@@ -123,6 +123,8 @@ classifier.fine_tune(class_weight={0: 0.2, 1: 0.8})
 
 You can access some of the official base model names through the `Models` class. However, you can directly type the HuggingFace's model name such as `bert-base-uncased` or `bert-base-chinese` when instantiating a `SentenceClassifier`.
 
+> See all the available models at [huggingface.co/models](https://huggingface.co/models).
+
 ## BERT
 - `BertBaseUncased`
 - `BertBaseCased`
@@ -151,8 +153,17 @@ You can access some of the official base model names through the `Models` class.
 - `AlbertXLargeCased2`
 - `AlbertXXLargeCased2`
 
-## More
-See other available models at [huggingface.co/models](https://huggingface.co/models).
+
+# Stickers
+<img src="misc/ernie-sticker-diecut.png" alt="Sticker Mule Logo" width="150"/>
+<img src="misc/ernie-sticker-holographic.png" alt="Sticker Mule Logo" width="150"/>
+
+Want to get some cool stickers? Star this GitHub repo and complete at least one of the following tasks: 
+- Explain why you like `ernie` on Twitter and follow [@ernie_python](https://twitter.com/ernie_python).
+- Share a Kaggle notebook with a not-seen-before example using `ernie`.
+- Share a Google Colab notebook with a not-seen-before example using `ernie`.
+
+> Send me the proof and your postal details at `dev` [at] `brunneis.com` and I will send you the stickers 🤗
 
 <br>
 <br>
@@ -162,7 +173,7 @@ See other available models at [huggingface.co/models](https://huggingface.co/mod
   <tbody>
     <tr>
       <td><a href="http://stickermule.com/supports/ernie20-sponsorship"><img src="misc/stickermule-logo.svg" alt="Sticker Mule Logo" width="150"/></a></td>
-        <td><i><b>Custom stickers that kick ass</i></b></td>
+        <td><i>Custom stickers that kick ass</i></td>
     </tr>
   </tbody>
 </table>
