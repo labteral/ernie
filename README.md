@@ -153,7 +153,6 @@ You can access some of the official base model names through the `Models` class.
 - `AlbertXLargeCased2`
 - `AlbertXXLargeCased2`
 
-
 # Stickers
 <span>
 <img src="misc/ernie-sticker-diecut.png" alt="Sticker Mule Logo" width="100"/>
@@ -166,9 +165,6 @@ Want to get some cool stickers? ⭐**Star this GitHub repo** and complete at lea
 - Share a Google Colab notebook with a not-seen-before example using `ernie`.
 
 > Send me the proof and your postal details at `dev` [at] `brunneis.com` and I will send you the stickers 🤗
-
-<br>
-<br>
 
 # Sponsors
 <table>
