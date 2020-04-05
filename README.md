@@ -154,9 +154,9 @@ You can access some of the official base model names through the `Models` class.
 
 # Stickers by Sticker Mule
 <span>
-<img src="misc/ernie-sticker-diecut.png" alt="Sticker Mule Logo" width="100"/>
+<img src="misc/ernie-sticker-diecut.png" alt="Sticker Mule Logo" width="100px"/>
 &nbsp;&nbsp;
-<img src="misc/ernie-sticker-holographic.png" alt="Sticker Mule Logo" width="100"/>
+<img src="misc/ernie-sticker-holographic.png" alt="Sticker Mule Logo" width="100px"/>
 </span>
 
 Want to get some cool stickers? ⭐**Star this GitHub repo** and complete at least one of the following tasks: 
@@ -166,4 +166,4 @@ Want to get some cool stickers? ⭐**Star this GitHub repo** and complete at lea
 
 > Send me the proof and your postal details at `dev` [at] `brunneis.com` and I will send you the stickers 🤗
 
-<a href="http://stickermule.com/supports/ernie20-sponsorship"><img src="misc/stickermule-logo.svg" alt="Sticker Mule Logo" width="150"/></a>
+<a href="http://stickermule.com/supports/ernie20-sponsorship"><img src="misc/stickermule-logo.svg" alt="Sticker Mule Logo" height="70px"/></a>
