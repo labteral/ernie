@@ -1,7 +1,6 @@
-
 <p align="center">
     <br>
-    <a href="#stickers" alt="Stickers section"><img src="misc/ernie-sticker-diecut.png" alt="Bernie Logo" width="150"/></a>
+    <a href="https://github.com/brunneis/ernie/blob/master/README.md#stickers" alt="Stickers section"><img src="misc/ernie-sticker-diecut.png" alt="Bernie Logo" width="150"/></a>
     <br>
 <p>
 
@@ -153,9 +152,10 @@ You can access some of the official base model names through the `Models` class.
 - `AlbertXLargeCased2`
 - `AlbertXXLargeCased2`
 
-# Stickers
+# Stickers by Sticker Mule
 <span>
 <img src="misc/ernie-sticker-diecut.png" alt="Sticker Mule Logo" width="100"/>
+&nbsp;
 <img src="misc/ernie-sticker-holographic.png" alt="Sticker Mule Logo" width="100"/>
 </span>
 
@@ -166,12 +166,4 @@ Want to get some cool stickers? ⭐**Star this GitHub repo** and complete at lea
 
 > Send me the proof and your postal details at `dev` [at] `brunneis.com` and I will send you the stickers 🤗
 
-# Sponsors
-<table>
-  <tbody>
-    <tr>
-      <td><a href="http://stickermule.com/supports/ernie20-sponsorship"><img src="misc/stickermule-logo.svg" alt="Sticker Mule Logo" width="150"/></a></td>
-        <td><i>Custom stickers that kick ass</i></td>
-    </tr>
-  </tbody>
-</table>
+<a href="http://stickermule.com/supports/ernie20-sponsorship"><img src="misc/stickermule-logo.svg" alt="Sticker Mule Logo" width="150"/></a>
