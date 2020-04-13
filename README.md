@@ -90,8 +90,6 @@ my_split_strategy = SplitStrategy(split_patterns: list, remove_patterns: list, r
 my_aggregation_strategy = AggregationStrategy(method: function, max_items: int, top_items: bool, sorting_class_index: int)
 ```
 
-
-
 # Save and restore a fine-tuned model
 ## Save model
 ```python
@@ -103,19 +101,50 @@ classifier.dump('./model')
 classifier = SentenceClassifier(model_path='./model')
 ```
 
-# Additional Info
+# Interrupted Training
+Since the execution may break during training (especially if you are using Google Colab), you can opt to secure every new trained epoch, so the training can be resumed without losing all the progress.
 
-## Accesing the model and tokenizer
-You can directly access both the model and tokenizer objects once the classifier has been instantiated:
 ```python
-classifier.model
-classifier.tokenizer
+classifier = SentenceClassifier(model_name=Models.BertBaseUncased, max_length=64)
+classifier.load_dataset(df, validation_split=0.2)
+
+for epoch in range(1, 5):
+  if epoch == 3:
+    raise Exception("Forced crash")
+
+  classifier.fine_tune(epochs=1)
+  classifier.dump(f'./my-model/{epoch}')
 ```
 
-## Keras `model.fit` arguments
-You can pass Keras arguments of the `model.fit` method to the `classifier.fine_tune` method. For example:
 ```python
-classifier.fine_tune(class_weight={0: 0.2, 1: 0.8})
+last_training_epoch = 2
+
+classifier = SentenceClassifier(model_path=f'./my-model/{last_training_epoch}')
+classifier.load_dataset(df, validation_split=0.2)
+
+for epoch in range(last_training_epoch + 1, 5):
+  classifier.fine_tune(epochs=1)
+  classifier.dump(f'./my-model/{epoch}')
+```
+
+# Autosave
+Even if you do not explicitly dump the model, it will be autosaved into `./ernie-autosave` every time `fine_tune` is successfully executed. 
+
+```
+ernie-autosave/
+└── model_family/
+    └── timestamp/
+        ├── config.json
+        ├── special_tokens_map.json
+        ├── tf_model.h5
+        ├── tokenizer_config.json
+        └── vocab.txt
+```
+
+You can easily clean the autosaved models by invoking `clean_autosave` after finishing a session or when starting a new one.
+```python
+from ernie import clean_autosave
+clean_autosave()
 ```
 
 # Supported Models
@@ -151,6 +180,21 @@ You can access some of the official base model names through the `Models` class.
 - `AlbertLargeCased2`
 - `AlbertXLargeCased2`
 - `AlbertXXLargeCased2`
+
+# Additional Info
+
+## Accesing the model and tokenizer
+You can directly access both the model and tokenizer objects once the classifier has been instantiated:
+```python
+classifier.model
+classifier.tokenizer
+```
+
+## Keras `model.fit` arguments
+You can pass Keras arguments of the `model.fit` method to the `classifier.fine_tune` method. For example:
+```python
+classifier.fine_tune(class_weight={0: 0.2, 1: 0.8})
+```
 
 # Stickers by Sticker Mule
 <span>
