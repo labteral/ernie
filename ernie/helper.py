@@ -4,7 +4,7 @@
 from tensorflow import data, TensorShape, int64, int32
 from math import exp
 from os import makedirs
-from shutil import rmtree, move
+from shutil import rmtree, move, copytree
 
 
 def get_features(tokenizer, sentences, labels):
@@ -72,15 +72,19 @@ def softmax(values):
     return tuple(map(lambda x: x / exps_sum, exps))
 
 
-def remove_dir(path):
-    rmtree(path)
-
-
 def make_dir(path):
     try:
         makedirs(path)
     except FileExistsError:
         pass
+
+
+def remove_dir(path):
+    rmtree(path)
+
+
+def copy_dir(source_path, target_path):
+    copytree(source_path, target_path)
 
 
 def move_dir(source_path, target_path):

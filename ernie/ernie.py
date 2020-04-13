@@ -15,9 +15,13 @@ import time
 from .models import Models, ModelsByFamily
 from .split_strategies import SplitStrategy, SplitStrategies, RegexExpressions
 from .aggregation_strategies import AggregationStrategy, AggregationStrategies
-from .helper import (get_features, softmax, remove_dir, make_dir, move_dir)
+from .helper import (get_features, softmax, remove_dir, make_dir, copy_dir)
 
 AUTOSAVE_PATH = './ernie-autosave/'
+
+
+def clean_autosave():
+    remove_dir(AUTOSAVE_PATH)
 
 
 class SentenceClassifier:
@@ -77,6 +81,7 @@ class SentenceClassifier:
         self._loaded_data = True
 
     def fine_tune(self,
+                  epochs=4,
                   learning_rate=2e-5,
                   epsilon=1e-8,
                   clipnorm=1.0,
@@ -119,11 +124,15 @@ class SentenceClassifier:
             validation_steps = self._validation_split
         logging.info(f'validation_steps: {validation_steps}')
 
-        self._model.fit(training_features,
-                        validation_data=validation_features,
-                        steps_per_epoch=training_steps,
-                        validation_steps=validation_steps,
-                        **kwargs)
+        temporary_path = self._get_temporary_path(name=self._model.name)
+
+        for i in range(epochs):
+            self._model.fit(training_features,
+                            epochs=1,
+                            validation_data=validation_features,
+                            steps_per_epoch=training_steps,
+                            validation_steps=validation_steps,
+                            **kwargs)
 
         # The fine-tuned model does not have the same input interface after being
         # exported and loaded again.
@@ -157,7 +166,7 @@ class SentenceClassifier:
                 yield aggregation_strategy.aggregate(predictions[split_index:stop_index])
 
     def dump(self, path):
-        move_dir(self._temporary_path, path)
+        copy_dir(self._temporary_path, path)
 
     def _dump(self, path):
         make_dir(path)
@@ -202,7 +211,7 @@ class SentenceClassifier:
         return f'{AUTOSAVE_PATH}{name}/{int(round(time.time() * 1000))}'
 
     def _reload_model(self):
-        self._temporary_path = self._get_temporary_path(name=self._model.name)
+        self._temporary_path = self._get_temporary_path(name=self._get_model_family())
         self._dump(self._temporary_path)
         self._load_local_model(self._temporary_path)
 
