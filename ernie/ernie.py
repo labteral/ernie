@@ -276,7 +276,7 @@ class SentenceClassifier:
                     self._model = self._model.__class__.from_pretrained(model_name, from_pt=False, **model_kwargs)
 
                 # PyTorch Model
-                except TypeError:
+                except (OSError, TypeError):
                     model = AutoModel.from_pretrained(model_name)
                     model.save_pretrained(temporary_path)
                     self._model = self._model.__class__.from_pretrained(temporary_path, from_pt=True, **model_kwargs)
