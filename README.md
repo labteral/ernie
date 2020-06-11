@@ -1,6 +1,6 @@
 <p align="center">
     <br>
-    <a href="https://github.com/brunneis/ernie#stickers-by-sticker-mule" alt="Stickers section"><img src="misc/ernie-sticker-diecut.png" alt="Bernie Logo" width="150"/></a>
+    <a href="https://github.com/brunneis/ernie#stickers-by-sticker-mule" alt="Stickers section"><img src="misc/ernie-sticker-diecut.png" alt="Ernie Logo" width="150"/></a>
     <br>
 <p>
 
