@@ -3,6 +3,7 @@
 
 import tensorflow as tf
 import numpy as np
+import pandas as pd
 from transformers import (
     AutoTokenizer,
     AutoModel,
@@ -56,18 +57,19 @@ class SentenceClassifier:
     def tokenizer(self):
         return self._tokenizer
 
-    def load_dataset(self, dataframe=None, csv_path=None, validation_split=0.1):
+    def load_dataset(self, dataframe=None, validation_split=0.1, stratify=None, csv_path=None, **csv_options):
         if dataframe is None and csv_path is None:
             raise ValueError
 
         if csv_path is not None:
-            raise NotImplementedError
+            dataframe = pd.read_csv(csv_path,**csv_options)
 
+        print(dataframe.head())
         sentences = list(dataframe[dataframe.columns[0]])
         labels = dataframe[dataframe.columns[1]].values
 
         training_sentences, validation_sentences, training_labels, validation_labels = train_test_split(
-            sentences, labels, test_size=validation_split, shuffle=True)
+            sentences, labels, test_size=validation_split, shuffle=True, stratify=stratify)
 
         self._training_features = get_features(self._tokenizer, training_sentences, training_labels)
         self._training_size = len(training_sentences)
