@@ -3,6 +3,7 @@
 
 import tensorflow as tf
 import numpy as np
+import pandas as pd
 from transformers import (
     AutoTokenizer,
     AutoModel,
@@ -61,7 +62,7 @@ class SentenceClassifier:
             raise ValueError
 
         if csv_path is not None:
-            raise NotImplementedError
+            dataframe = pd.read_csv(csv_path)
 
         sentences = list(dataframe[dataframe.columns[0]])
         labels = dataframe[dataframe.columns[1]].values
