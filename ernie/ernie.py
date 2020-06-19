@@ -64,7 +64,6 @@ class SentenceClassifier:
         if csv_path is not None:
             dataframe = pd.read_csv(csv_path,**csv_options)
 
-        print(dataframe.head())
         sentences = list(dataframe[dataframe.columns[0]])
         labels = dataframe[dataframe.columns[1]].values
 
