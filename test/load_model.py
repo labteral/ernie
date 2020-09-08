@@ -11,7 +11,7 @@ class TestLoadModel(unittest.TestCase):
               ("This is a neutral sentence. That's normal.", 2)]
     df = pd.DataFrame(tuples)
 
-    classifier = SentenceClassifier(model_name='xlm-roberta-base', max_length=128, labels_no=3)
+    classifier = SentenceClassifier(model_name='xlm-roberta-large', max_length=128, labels_no=3)
     classifier.load_dataset(df, validation_split=0.2)
     classifier.fine_tune(epochs=4, learning_rate=2e-5, training_batch_size=32, validation_batch_size=64)
 
