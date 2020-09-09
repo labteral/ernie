@@ -5,7 +5,7 @@ from .ernie import *
 from tensorflow.python.client import device_lib
 import logging
 
-__version__ = '0.0.32b0'
+__version__ = '0.0.33b0'
 
 logging.getLogger().setLevel(logging.WARNING)
 logging.getLogger("transformers.tokenization_utils").setLevel(logging.ERROR)

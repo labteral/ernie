@@ -58,13 +58,18 @@ class SentenceClassifier:
     def tokenizer(self):
         return self._tokenizer
 
-    def load_dataset(self, dataframe=None, validation_split=0.1, stratify=None, csv_path=None, read_csv_kwargs=None):
+    def load_dataset(self,
+                     dataframe=None,
+                     validation_split=0.1,
+                     stratify=None,
+                     csv_path=None,
+                     read_csv_kwargs=None):
         if dataframe is None and csv_path is None:
             raise ValueError
 
         if csv_path is not None:
             dataframe = pd.read_csv(csv_path, **read_csv_kwargs)
-  
+
         sentences = list(dataframe[dataframe.columns[0]])
         labels = dataframe[dataframe.columns[1]].values
 
@@ -236,9 +241,11 @@ class SentenceClassifier:
     def _load_local_model(self, model_path):
         try:
             self._tokenizer = AutoTokenizer.from_pretrained(model_path + '/tokenizer')
+            self._config = AutoConfig.from_pretrained(model_path + '/tokenizer')
         # Old models didn't use to have a tokenizer folder
         except OSError:
             self._tokenizer = AutoTokenizer.from_pretrained(model_path)
+            self._config = AutoConfig.from_pretrained(model_path)
         self._model = TFAutoModelForSequenceClassification.from_pretrained(model_path,
                                                                            from_pt=False)
 
@@ -251,10 +258,6 @@ class SentenceClassifier:
         if 'uncased' in model_name.lower():
             do_lower_case = True
         tokenizer_kwargs.update({'do_lower_case': do_lower_case})
-
-        self._tokenizer = None
-        self._model = None
-        self._config = None
 
         self._tokenizer = AutoTokenizer.from_pretrained(model_name, **tokenizer_kwargs)
         self._config = AutoConfig.from_pretrained(model_name)
