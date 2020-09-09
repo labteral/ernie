@@ -58,18 +58,13 @@ class SentenceClassifier:
     def tokenizer(self):
         return self._tokenizer
 
-    def load_dataset(self,
-                     dataframe=None,
-                     validation_split=0.1,
-                     stratify=None,
-                     csv_path=None,
-                     **csv_options):
+    def load_dataset(self, dataframe=None, validation_split=0.1, stratify=None, csv_path=None, read_csv_kwargs=None):
         if dataframe is None and csv_path is None:
             raise ValueError
 
         if csv_path is not None:
-            dataframe = pd.read_csv(csv_path, **csv_options)
-
+            dataframe = pd.read_csv(csv_path, **read_csv_kwargs)
+  
         sentences = list(dataframe[dataframe.columns[0]])
         labels = dataframe[dataframe.columns[1]].values
 
