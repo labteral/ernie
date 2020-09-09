@@ -36,7 +36,6 @@ class SentenceClassifier:
                  model_kwargs=None):
         self._loaded_data = False
         self._model_path = None
-        self._tokenizer_path = None
 
         if model_kwargs is None:
             model_kwargs = {}
@@ -168,16 +167,16 @@ class SentenceClassifier:
                 stop_index = split_indexes[i + 1]
                 yield aggregation_strategy.aggregate(predictions[split_index:stop_index])
 
-    def dump(self, path1, path2):
-        copy_dir(self._model_path, path1)
-        copy_dir(self._tokenizer_path, path2)
+    def dump(self, path):
+        copy_dir(self._model_path, path)
+        copy_dir(self._model_path, path+'_tokenizer')
 
-    def _dump(self, path1, path2):
-        make_dir(path1)
-        make_dir(path2)
-        self._model.save_pretrained(path1)
-        self._tokenizer.save_pretrained(path2)
-        self._config.save_pretrained(path2)
+    def _dump(self, path):
+        make_dir(path)
+        make_dir(path+'_tokenizer')
+        self._model.save_pretrained(path)
+        self._tokenizer.save_pretrained(path+'_tokenizer')
+        self._config.save_pretrained(path+'_tokenizer')
 
     def _predict_batch(self, sentences: list, batch_size: int):
         sentences_number = len(sentences)
@@ -218,12 +217,11 @@ class SentenceClassifier:
 
     def _reload_model(self):
         self._model_path = self._get_temporary_path(name=self._get_model_family())
-        self._tokenizer_path = self._get_temporary_path(name=self._get_model_family()+'_tokenizer')
-        self._dump(self._model_path, self._tokenizer_path)
-        self._load_local_model(self._model_path, self._tokenizer_path)
+        self._dump(self._model_path)
+        self._load_local_model(self._model_path)
 
-    def _load_local_model(self, model_path, tokenizer_path):
-        self._tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+    def _load_local_model(self, model_path):
+        self._tokenizer = AutoTokenizer.from_pretrained(model_path + '_tokenizer')
         self._model = TFAutoModelForSequenceClassification.from_pretrained(model_path, from_pt=False)
 
     def _get_model_family(self):
