@@ -36,8 +36,8 @@ tuples = [
     ("This is a positive example. I'm very happy today.", 1),
     ("This is a negative sentence. Everything was wrong today at work.", 0)
 ]
-
 df = pd.DataFrame(tuples)
+
 classifier = SentenceClassifier(
     model_name=Models.BertBaseUncased,
     max_length=64,
