@@ -10,21 +10,30 @@ from shutil import rmtree, move, copytree
 def get_features(tokenizer, sentences, labels):
     features = []
     for i, sentence in enumerate(sentences):
-        inputs = tokenizer.encode_plus(sentence, add_special_tokens=True, max_length=tokenizer.max_len)
-        input_ids, token_type_ids = inputs['input_ids'], inputs['token_type_ids']
+        inputs = tokenizer.encode_plus(
+            sentence,
+            add_special_tokens=True,
+            max_length=tokenizer.max_len
+        )
+        input_ids, token_type_ids = \
+            inputs['input_ids'], inputs['token_type_ids']
         padding_length = tokenizer.max_len - len(input_ids)
 
         if tokenizer.padding_side == 'right':
             attention_mask = [1] * len(input_ids) + [0] * padding_length
             input_ids = input_ids + [tokenizer.pad_token_id] * padding_length
-            token_type_ids = token_type_ids + [tokenizer.pad_token_type_id] * padding_length
+            token_type_ids = token_type_ids + \
+                [tokenizer.pad_token_type_id] * padding_length
         else:
             attention_mask = [0] * padding_length + [1] * len(input_ids)
             input_ids = [tokenizer.pad_token_id] * padding_length + input_ids
-            token_type_ids = [tokenizer.pad_token_type_id] * padding_length + token_type_ids
+            token_type_ids = \
+                [tokenizer.pad_token_type_id] * padding_length + token_type_ids
 
-        assert tokenizer.max_len == len(attention_mask) == len(input_ids) == len(
-            token_type_ids), f'{tokenizer.max_len}, {len(attention_mask)}, {len(input_ids)}, {len(token_type_ids)}'
+        assert tokenizer.max_len \
+            == len(attention_mask) \
+            == len(input_ids) \
+            == len(token_type_ids)
 
         feature = {
             'input_ids': input_ids,

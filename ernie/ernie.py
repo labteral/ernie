@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import tensorflow as tf
 import numpy as np
 import pandas as pd
 from transformers import (
@@ -14,10 +13,23 @@ from tensorflow import keras
 from sklearn.model_selection import train_test_split
 import logging
 import time
-from .models import Models, ModelsByFamily
-from .split_strategies import SplitStrategy, SplitStrategies, RegexExpressions
-from .aggregation_strategies import AggregationStrategy, AggregationStrategies
-from .helper import (get_features, softmax, remove_dir, make_dir, copy_dir)
+from .models import Models, ModelsByFamily  # noqa: F401
+from .split_strategies import (  # noqa: F401
+    SplitStrategy,
+    SplitStrategies,
+    RegexExpressions
+)
+from .aggregation_strategies import (  # noqa: F401
+    AggregationStrategy,
+    AggregationStrategies
+)
+from .helper import (
+    get_features,
+    softmax,
+    remove_dir,
+    make_dir,
+    copy_dir
+)
 
 AUTOSAVE_PATH = './ernie-autosave/'
 
@@ -58,24 +70,47 @@ class SentenceClassifier:
     def tokenizer(self):
         return self._tokenizer
 
-    def load_dataset(self, dataframe=None, validation_split=0.1, random_state=None, stratify=None, csv_path=None, read_csv_kwargs=None):
+    def load_dataset(self,
+                     dataframe=None,
+                     validation_split=0.1,
+                     random_state=None,
+                     stratify=None,
+                     csv_path=None,
+                     read_csv_kwargs=None):
+
         if dataframe is None and csv_path is None:
             raise ValueError
 
         if csv_path is not None:
             dataframe = pd.read_csv(csv_path, **read_csv_kwargs)
-  
+
         sentences = list(dataframe[dataframe.columns[0]])
         labels = dataframe[dataframe.columns[1]].values
 
-        training_sentences, validation_sentences, training_labels, validation_labels = train_test_split(
-            sentences, labels, test_size=validation_split, shuffle=True, random_state=random_state, stratify=stratify)
+        (
+            training_sentences,
+            validation_sentences,
+            training_labels,
+            validation_labels
+        ) = train_test_split(
+            sentences,
+            labels,
+            test_size=validation_split,
+            shuffle=True,
+            random_state=random_state,
+            stratify=stratify
+        )
 
-        self._training_features = get_features(self._tokenizer, training_sentences, training_labels)
+        self._training_features = get_features(
+            self._tokenizer, training_sentences, training_labels)
+
         self._training_size = len(training_sentences)
 
-        self._validation_features = get_features(self._tokenizer, validation_sentences,
-                                                 validation_labels)
+        self._validation_features = get_features(
+            self._tokenizer,
+            validation_sentences,
+            validation_labels
+        )
         self._validation_split = len(validation_sentences)
 
         logging.info(f'training_size: {self._training_size}')
@@ -120,7 +155,8 @@ class SentenceClassifier:
 
         training_features = self._training_features.shuffle(
             self._training_size).batch(training_batch_size).repeat(-1)
-        validation_features = self._validation_features.batch(validation_batch_size)
+        validation_features = self._validation_features.batch(
+            validation_batch_size)
 
         training_steps = self._training_size // training_batch_size
         if training_steps == 0:
@@ -132,8 +168,6 @@ class SentenceClassifier:
             validation_steps = self._validation_split
         logging.info(f'validation_steps: {validation_steps}')
 
-        temporary_path = self._get_temporary_path(name=self._model.name)
-
         for i in range(epochs):
             self._model.fit(training_features,
                             epochs=1,
@@ -142,18 +176,29 @@ class SentenceClassifier:
                             validation_steps=validation_steps,
                             **kwargs)
 
-        # The fine-tuned model does not have the same input interface after being
-        # exported and loaded again.
+        # The fine-tuned model does not have the same input interface
+        # after being exported and loaded again.
         self._reload_model()
 
-    def predict_one(self, text, split_strategy=None, aggregation_strategy=None):
+    def predict_one(
+        self,
+        text,
+        split_strategy=None,
+        aggregation_strategy=None
+    ):
         return next(
             self.predict([text],
                          batch_size=1,
                          split_strategy=split_strategy,
                          aggregation_strategy=aggregation_strategy))
 
-    def predict(self, texts, batch_size=32, split_strategy=None, aggregation_strategy=None):
+    def predict(
+        self,
+        texts,
+        batch_size=32,
+        split_strategy=None,
+        aggregation_strategy=None
+    ):
         if split_strategy is None:
             yield from self._predict_batch(texts, batch_size)
 
@@ -173,7 +218,9 @@ class SentenceClassifier:
             predictions = list(self._predict_batch(sentences, batch_size))
             for i, split_index in enumerate(split_indexes[:-1]):
                 stop_index = split_indexes[i + 1]
-                yield aggregation_strategy.aggregate(predictions[split_index:stop_index])
+                yield aggregation_strategy.aggregate(
+                    predictions[split_index:stop_index]
+                )
 
     def dump(self, path):
         if self._model_path:
@@ -198,16 +245,24 @@ class SentenceClassifier:
             attention_mask_list = []
 
             stop_index = i + batch_size
-            stop_index = stop_index if stop_index < sentences_number else sentences_number
+            stop_index = stop_index if stop_index < sentences_number \
+                else sentences_number
+
             for j in range(i, stop_index):
-                features = self._tokenizer.encode_plus(sentences[j],
-                                                       add_special_tokens=True,
-                                                       max_length=self._tokenizer.max_len)
-                input_ids, _, attention_mask = features['input_ids'], features[
-                    'token_type_ids'], features['attention_mask']
+                features = self._tokenizer.encode_plus(
+                    sentences[j],
+                    add_special_tokens=True,
+                    max_length=self._tokenizer.max_len
+                )
+                input_ids, _, attention_mask = (
+                    features['input_ids'],
+                    features['token_type_ids'],
+                    features['attention_mask']
+                )
 
                 input_ids = self._list_to_padded_array(features['input_ids'])
-                attention_mask = self._list_to_padded_array(features['attention_mask'])
+                attention_mask = self._list_to_padded_array(
+                    features['attention_mask'])
 
                 input_ids_list.append(input_ids)
                 attention_mask_list.append(attention_mask)
@@ -217,7 +272,10 @@ class SentenceClassifier:
                 'attention_mask': np.array(attention_mask_list)
             }
             logit_predictions = self._model.predict_on_batch(input_dict)
-            yield from ([softmax(logit_prediction) for logit_prediction in logit_predictions[0]])
+            yield from (
+                [softmax(logit_prediction)
+                 for logit_prediction in logit_predictions[0]]
+            )
 
     def _list_to_padded_array(self, items):
         array = np.array(items)
@@ -229,18 +287,26 @@ class SentenceClassifier:
         return f'{AUTOSAVE_PATH}{name}/{int(round(time.time() * 1000))}'
 
     def _reload_model(self):
-        self._model_path = self._get_temporary_path(name=self._get_model_family())
+        self._model_path = self._get_temporary_path(
+            name=self._get_model_family())
         self._dump(self._model_path)
         self._load_local_model(self._model_path)
 
     def _load_local_model(self, model_path):
         try:
-            self._tokenizer = AutoTokenizer.from_pretrained(model_path + '/tokenizer')
+            self._tokenizer = AutoTokenizer.from_pretrained(
+                model_path + '/tokenizer')
+            self._config = AutoConfig.from_pretrained(
+                model_path + '/tokenizer')
+
         # Old models didn't use to have a tokenizer folder
         except OSError:
             self._tokenizer = AutoTokenizer.from_pretrained(model_path)
-        self._model = TFAutoModelForSequenceClassification.from_pretrained(model_path,
-                                                                           from_pt=False)
+            self._config = AutoConfig.from_pretrained(model_path)
+        self._model = TFAutoModelForSequenceClassification.from_pretrained(
+            model_path,
+            from_pt=False
+        )
 
     def _get_model_family(self):
         model_family = ''.join(self._model.name[2:].split('_')[:2])
@@ -252,11 +318,8 @@ class SentenceClassifier:
             do_lower_case = True
         tokenizer_kwargs.update({'do_lower_case': do_lower_case})
 
-        self._tokenizer = None
-        self._model = None
-        self._config = None
-
-        self._tokenizer = AutoTokenizer.from_pretrained(model_name, **tokenizer_kwargs)
+        self._tokenizer = AutoTokenizer.from_pretrained(
+            model_name, **tokenizer_kwargs)
         self._config = AutoConfig.from_pretrained(model_name)
 
         temporary_path = self._get_temporary_path()
@@ -264,21 +327,30 @@ class SentenceClassifier:
 
         # TensorFlow model
         try:
-            self._model = TFAutoModelForSequenceClassification.from_pretrained(model_name,
-                                                                               from_pt=False)
+            self._model = TFAutoModelForSequenceClassification.from_pretrained(
+                model_name,
+                from_pt=False
+            )
 
         # PyTorch model
         except TypeError:
             try:
-                self._model = TFAutoModelForSequenceClassification.from_pretrained(model_name,
-                                                                                   from_pt=True)
+                self._model = \
+                    TFAutoModelForSequenceClassification.from_pretrained(
+                        model_name,
+                        from_pt=True
+                    )
 
-            # Loading a TF model from a PyTorch checkpoint is not supported when using a model identifier name
+            # Loading a TF model from a PyTorch checkpoint is not supported
+            # when using a model identifier name
             except OSError:
                 model = AutoModel.from_pretrained(model_name)
                 model.save_pretrained(temporary_path)
-                self._model = TFAutoModelForSequenceClassification.from_pretrained(temporary_path,
-                                                                                   from_pt=True)
+                self._model = \
+                    TFAutoModelForSequenceClassification.from_pretrained(
+                        temporary_path,
+                        from_pt=True
+                    )
 
         # Clean the model's last layer if the provided properties are different
         clean_last_layer = False
@@ -292,28 +364,34 @@ class SentenceClassifier:
                 break
 
         if clean_last_layer:
-            model_family = self._get_model_family()
             try:
-                getattr(self._model, self._get_model_family()).save_pretrained(temporary_path)
-                self._model = self._model.__class__.from_pretrained(temporary_path,
-                                                                    from_pt=False,
-                                                                    **model_kwargs)
+                getattr(self._model, self._get_model_family()
+                        ).save_pretrained(temporary_path)
+                self._model = self._model.__class__.from_pretrained(
+                    temporary_path,
+                    from_pt=False,
+                    **model_kwargs
+                )
 
             # The model is itself the main layer
             except AttributeError:
                 # TensorFlow model
                 try:
-                    self._model = self._model.__class__.from_pretrained(model_name,
-                                                                        from_pt=False,
-                                                                        **model_kwargs)
+                    self._model = self._model.__class__.from_pretrained(
+                        model_name,
+                        from_pt=False,
+                        **model_kwargs
+                    )
 
                 # PyTorch Model
                 except (OSError, TypeError):
                     model = AutoModel.from_pretrained(model_name)
                     model.save_pretrained(temporary_path)
-                    self._model = self._model.__class__.from_pretrained(temporary_path,
-                                                                        from_pt=True,
-                                                                        **model_kwargs)
+                    self._model = self._model.__class__.from_pretrained(
+                        temporary_path,
+                        from_pt=True,
+                        **model_kwargs
+                    )
 
         remove_dir(temporary_path)
         assert self._tokenizer and self._model

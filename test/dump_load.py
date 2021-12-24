@@ -7,8 +7,10 @@ from ernie import SentenceClassifier, Models, remove_dir
 
 
 class TestDumpAndLoad(unittest.TestCase):
-    df = pd.DataFrame([("This is a positive example. I'm very happy today.", 1),
-                       ("This is a negative sentence. Everything was wrong today at work.", 0)])
+    df = pd.DataFrame([
+        ("This is a positive example. I'm very happy today.", 1),
+        ("This is a negative sentence. Everything was wrong today at work.", 0)
+    ])
     sentence = "Oh, that's great!"
 
     def test_bert(self):
