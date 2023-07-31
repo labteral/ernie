@@ -50,7 +50,7 @@ class SplitStrategy:
             return no_tokens
 
         no_special_tokens = len(tokenizer.encode('', add_special_tokens=True))
-        max_tokens = tokenizer.max_len - no_special_tokens
+        max_tokens = tokenizer.model_max_length - no_special_tokens
 
         if self.remove_patterns is not None:
             for remove_pattern in self.remove_patterns:
@@ -67,7 +67,8 @@ class SplitStrategy:
             if len_in_tokens(split) > max_tokens:
                 if len(split_patterns) > 1:
                     sub_splits = self.split(
-                        split, tokenizer, split_patterns[1:])
+                        split, tokenizer, split_patterns[1:]
+                    )
                     selected_splits.extend(sub_splits)
                 else:
                     selected_splits.append(split)
@@ -94,8 +95,8 @@ class SplitStrategy:
         if not remove_too_short_groups:
             final_splits = selected_splits
         else:
-            final_splits = []
-            min_length = tokenizer.max_len / 2
+            final_splits
+            min_length = tokenizer.model_max_length / 2
             for split in selected_splits:
                 if len_in_tokens(split) >= min_length:
                     final_splits.append(split)
@@ -104,22 +105,22 @@ class SplitStrategy:
 
 
 class SplitStrategies:
-    SentencesWithoutUrls = SplitStrategy(split_patterns=[
-        RegexExpressions.split_by_dot,
-        RegexExpressions.split_by_semicolon,
-        RegexExpressions.split_by_colon,
-        RegexExpressions.split_by_comma
-    ],
+    SentencesWithoutUrls = SplitStrategy(
+        split_patterns=[
+            RegexExpressions.split_by_dot, RegexExpressions.split_by_semicolon,
+            RegexExpressions.split_by_colon, RegexExpressions.split_by_comma
+        ],
         remove_patterns=[RegexExpressions.url, RegexExpressions.domain],
         remove_too_short_groups=False,
-        group_splits=False)
+        group_splits=False
+    )
 
-    GroupedSentencesWithoutUrls = SplitStrategy(split_patterns=[
-        RegexExpressions.split_by_dot,
-        RegexExpressions.split_by_semicolon,
-        RegexExpressions.split_by_colon,
-        RegexExpressions.split_by_comma
-    ],
+    GroupedSentencesWithoutUrls = SplitStrategy(
+        split_patterns=[
+            RegexExpressions.split_by_dot, RegexExpressions.split_by_semicolon,
+            RegexExpressions.split_by_colon, RegexExpressions.split_by_comma
+        ],
         remove_patterns=[RegexExpressions.url, RegexExpressions.domain],
         remove_too_short_groups=True,
-        group_splits=True)
+        group_splits=True
+    )

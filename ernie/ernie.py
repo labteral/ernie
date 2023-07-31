@@ -23,13 +23,7 @@ from .aggregation_strategies import (  # noqa: F401
     AggregationStrategy,
     AggregationStrategies
 )
-from .helper import (
-    get_features,
-    softmax,
-    remove_dir,
-    make_dir,
-    copy_dir
-)
+from .helper import (get_features, softmax, remove_dir, make_dir, copy_dir)
 
 AUTOSAVE_PATH = './ernie-autosave/'
 
@@ -39,13 +33,15 @@ def clean_autosave():
 
 
 class SentenceClassifier:
-    def __init__(self,
-                 model_name=Models.BertBaseUncased,
-                 model_path=None,
-                 max_length=64,
-                 labels_no=2,
-                 tokenizer_kwargs=None,
-                 model_kwargs=None):
+    def __init__(
+        self,
+        model_name=Models.BertBaseUncased,
+        model_path=None,
+        max_length=64,
+        labels_no=2,
+        tokenizer_kwargs=None,
+        model_kwargs=None,
+    ):
         self._loaded_data = False
         self._model_path = None
 
@@ -60,7 +56,11 @@ class SentenceClassifier:
         if model_path is not None:
             self._load_local_model(model_path)
         else:
-            self._load_remote_model(model_name, tokenizer_kwargs, model_kwargs)
+            self._load_remote_model(
+                model_name,
+                tokenizer_kwargs,
+                model_kwargs,
+            )
 
     @property
     def model(self):
@@ -70,13 +70,15 @@ class SentenceClassifier:
     def tokenizer(self):
         return self._tokenizer
 
-    def load_dataset(self,
-                     dataframe=None,
-                     validation_split=0.1,
-                     random_state=None,
-                     stratify=None,
-                     csv_path=None,
-                     read_csv_kwargs=None):
+    def load_dataset(
+        self,
+        dataframe=None,
+        validation_split=0.1,
+        random_state=None,
+        stratify=None,
+        csv_path=None,
+        read_csv_kwargs=None,
+    ):
 
         if dataframe is None and csv_path is None:
             raise ValueError
@@ -88,9 +90,7 @@ class SentenceClassifier:
         labels = dataframe[dataframe.columns[1]].values
 
         (
-            training_sentences,
-            validation_sentences,
-            training_labels,
+            training_sentences, validation_sentences, training_labels,
             validation_labels
         ) = train_test_split(
             sentences,
@@ -102,14 +102,13 @@ class SentenceClassifier:
         )
 
         self._training_features = get_features(
-            self._tokenizer, training_sentences, training_labels)
+            self._tokenizer, training_sentences, training_labels
+        )
 
         self._training_size = len(training_sentences)
 
         self._validation_features = get_features(
-            self._tokenizer,
-            validation_sentences,
-            validation_labels
+            self._tokenizer, validation_sentences, validation_labels
         )
         self._validation_split = len(validation_sentences)
 
@@ -118,20 +117,22 @@ class SentenceClassifier:
 
         self._loaded_data = True
 
-    def fine_tune(self,
-                  epochs=4,
-                  learning_rate=2e-5,
-                  epsilon=1e-8,
-                  clipnorm=1.0,
-                  optimizer_function=keras.optimizers.Adam,
-                  optimizer_kwargs=None,
-                  loss_function=keras.losses.SparseCategoricalCrossentropy,
-                  loss_kwargs=None,
-                  accuracy_function=keras.metrics.SparseCategoricalAccuracy,
-                  accuracy_kwargs=None,
-                  training_batch_size=32,
-                  validation_batch_size=64,
-                  **kwargs):
+    def fine_tune(
+        self,
+        epochs=4,
+        learning_rate=2e-5,
+        epsilon=1e-8,
+        clipnorm=1.0,
+        optimizer_function=keras.optimizers.Adam,
+        optimizer_kwargs=None,
+        loss_function=keras.losses.SparseCategoricalCrossentropy,
+        loss_kwargs=None,
+        accuracy_function=keras.metrics.SparseCategoricalAccuracy,
+        accuracy_kwargs=None,
+        training_batch_size=32,
+        validation_batch_size=64,
+        **kwargs,
+    ):
         if not self._loaded_data:
             raise Exception('Data has not been loaded.')
 
@@ -154,9 +155,11 @@ class SentenceClassifier:
         self._model.compile(optimizer=optimizer, loss=loss, metrics=[accuracy])
 
         training_features = self._training_features.shuffle(
-            self._training_size).batch(training_batch_size).repeat(-1)
+            self._training_size
+        ).batch(training_batch_size).repeat(-1)
         validation_features = self._validation_features.batch(
-            validation_batch_size)
+            validation_batch_size
+        )
 
         training_steps = self._training_size // training_batch_size
         if training_steps == 0:
@@ -169,12 +172,14 @@ class SentenceClassifier:
         logging.info(f'validation_steps: {validation_steps}')
 
         for i in range(epochs):
-            self._model.fit(training_features,
-                            epochs=1,
-                            validation_data=validation_features,
-                            steps_per_epoch=training_steps,
-                            validation_steps=validation_steps,
-                            **kwargs)
+            self._model.fit(
+                training_features,
+                epochs=1,
+                validation_data=validation_features,
+                steps_per_epoch=training_steps,
+                validation_steps=validation_steps,
+                **kwargs
+            )
 
         # The fine-tuned model does not have the same input interface
         # after being exported and loaded again.
@@ -184,20 +189,23 @@ class SentenceClassifier:
         self,
         text,
         split_strategy=None,
-        aggregation_strategy=None
+        aggregation_strategy=None,
     ):
         return next(
-            self.predict([text],
-                         batch_size=1,
-                         split_strategy=split_strategy,
-                         aggregation_strategy=aggregation_strategy))
+            self.predict(
+                [text],
+                batch_size=1,
+                split_strategy=split_strategy,
+                aggregation_strategy=aggregation_strategy,
+            )
+        )
 
     def predict(
         self,
         texts,
         batch_size=32,
         split_strategy=None,
-        aggregation_strategy=None
+        aggregation_strategy=None,
     ):
         if split_strategy is None:
             yield from self._predict_batch(texts, batch_size)
@@ -235,7 +243,11 @@ class SentenceClassifier:
         self._tokenizer.save_pretrained(path + '/tokenizer')
         self._config.save_pretrained(path + '/tokenizer')
 
-    def _predict_batch(self, sentences: list, batch_size: int):
+    def _predict_batch(
+        self,
+        sentences: list,
+        batch_size: int,
+    ):
         sentences_number = len(sentences)
         if batch_size > sentences_number:
             batch_size = sentences_number
@@ -252,17 +264,17 @@ class SentenceClassifier:
                 features = self._tokenizer.encode_plus(
                     sentences[j],
                     add_special_tokens=True,
-                    max_length=self._tokenizer.max_len
+                    max_length=self._tokenizer.model_max_length,
                 )
                 input_ids, _, attention_mask = (
-                    features['input_ids'],
-                    features['token_type_ids'],
+                    features['input_ids'], features['token_type_ids'],
                     features['attention_mask']
                 )
 
                 input_ids = self._list_to_padded_array(features['input_ids'])
                 attention_mask = self._list_to_padded_array(
-                    features['attention_mask'])
+                    features['attention_mask']
+                )
 
                 input_ids_list.append(input_ids)
                 attention_mask_list.append(attention_mask)
@@ -273,13 +285,15 @@ class SentenceClassifier:
             }
             logit_predictions = self._model.predict_on_batch(input_dict)
             yield from (
-                [softmax(logit_prediction)
-                 for logit_prediction in logit_predictions[0]]
+                [
+                    softmax(logit_prediction)
+                    for logit_prediction in logit_predictions[0]
+                ]
             )
 
     def _list_to_padded_array(self, items):
         array = np.array(items)
-        padded_array = np.zeros(self._tokenizer.max_len, dtype=np.int)
+        padded_array = np.zeros(self._tokenizer.model_max_length, dtype=np.int)
         padded_array[:array.shape[0]] = array
         return padded_array
 
@@ -288,38 +302,47 @@ class SentenceClassifier:
 
     def _reload_model(self):
         self._model_path = self._get_temporary_path(
-            name=self._get_model_family())
+            name=self._get_model_family()
+        )
         self._dump(self._model_path)
         self._load_local_model(self._model_path)
 
     def _load_local_model(self, model_path):
         try:
             self._tokenizer = AutoTokenizer.from_pretrained(
-                model_path + '/tokenizer')
+                model_path + '/tokenizer'
+            )
             self._config = AutoConfig.from_pretrained(
-                model_path + '/tokenizer')
+                model_path + '/tokenizer'
+            )
 
         # Old models didn't use to have a tokenizer folder
         except OSError:
             self._tokenizer = AutoTokenizer.from_pretrained(model_path)
             self._config = AutoConfig.from_pretrained(model_path)
         self._model = TFAutoModelForSequenceClassification.from_pretrained(
-            model_path,
-            from_pt=False
+            model_path, from_pt=False
         )
 
     def _get_model_family(self):
         model_family = ''.join(self._model.name[2:].split('_')[:2])
         return model_family
 
-    def _load_remote_model(self, model_name, tokenizer_kwargs, model_kwargs):
+    def _load_remote_model(
+        self,
+        model_name,
+        tokenizer_kwargs,
+        model_kwargs,
+    ):
         do_lower_case = False
         if 'uncased' in model_name.lower():
             do_lower_case = True
         tokenizer_kwargs.update({'do_lower_case': do_lower_case})
 
         self._tokenizer = AutoTokenizer.from_pretrained(
-            model_name, **tokenizer_kwargs)
+            model_name,
+            **tokenizer_kwargs,
+        )
         self._config = AutoConfig.from_pretrained(model_name)
 
         temporary_path = self._get_temporary_path()
@@ -329,11 +352,11 @@ class SentenceClassifier:
         try:
             self._model = TFAutoModelForSequenceClassification.from_pretrained(
                 model_name,
-                from_pt=False
+                from_pt=False,
             )
 
         # PyTorch model
-        except TypeError:
+        except OSError:
             try:
                 self._model = \
                     TFAutoModelForSequenceClassification.from_pretrained(
@@ -368,9 +391,7 @@ class SentenceClassifier:
                 getattr(self._model, self._get_model_family()
                         ).save_pretrained(temporary_path)
                 self._model = self._model.__class__.from_pretrained(
-                    temporary_path,
-                    from_pt=False,
-                    **model_kwargs
+                    temporary_path, from_pt=False, **model_kwargs
                 )
 
             # The model is itself the main layer
@@ -378,9 +399,7 @@ class SentenceClassifier:
                 # TensorFlow model
                 try:
                     self._model = self._model.__class__.from_pretrained(
-                        model_name,
-                        from_pt=False,
-                        **model_kwargs
+                        model_name, from_pt=False, **model_kwargs
                     )
 
                 # PyTorch Model
@@ -388,9 +407,7 @@ class SentenceClassifier:
                     model = AutoModel.from_pretrained(model_name)
                     model.save_pretrained(temporary_path)
                     self._model = self._model.__class__.from_pretrained(
-                        temporary_path,
-                        from_pt=True,
-                        **model_kwargs
+                        temporary_path, from_pt=True, **model_kwargs
                     )
 
         remove_dir(temporary_path)

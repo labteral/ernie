@@ -5,7 +5,7 @@ from .ernie import *  # noqa: F401, F403
 from tensorflow.python.client import device_lib
 import logging
 
-__version__ = '1.0.1'
+__version__ = '1.2307.0'
 
 logging.getLogger().setLevel(logging.WARNING)
 logging.getLogger("transformers.tokenization_utils").setLevel(logging.ERROR)
@@ -18,7 +18,7 @@ logging.basicConfig(
 def _get_cpu_name():
     import cpuinfo
     cpu_info = cpuinfo.get_cpu_info()
-    cpu_name = f"{cpu_info['brand']}, {cpu_info['count']} vCores"
+    cpu_name = f"{cpu_info['brand_raw']}, {cpu_info['count']} vCores"
     return cpu_name
 
 

@@ -13,11 +13,13 @@ def get_features(tokenizer, sentences, labels):
         inputs = tokenizer.encode_plus(
             sentence,
             add_special_tokens=True,
-            max_length=tokenizer.max_len
+            max_length=tokenizer.model_max_length,
         )
-        input_ids, token_type_ids = \
-            inputs['input_ids'], inputs['token_type_ids']
-        padding_length = tokenizer.max_len - len(input_ids)
+        input_ids, token_type_ids = (
+            inputs['input_ids'],
+            inputs['token_type_ids'],
+        )
+        padding_length = tokenizer.model_max_length - len(input_ids)
 
         if tokenizer.padding_side == 'right':
             attention_mask = [1] * len(input_ids) + [0] * padding_length
@@ -30,7 +32,7 @@ def get_features(tokenizer, sentences, labels):
             token_type_ids = \
                 [tokenizer.pad_token_type_id] * padding_length + token_type_ids
 
-        assert tokenizer.max_len \
+        assert tokenizer.model_max_length \
             == len(attention_mask) \
             == len(input_ids) \
             == len(token_type_ids)
@@ -57,11 +59,13 @@ def get_features(tokenizer, sentences, labels):
 
     dataset = data.Dataset.from_generator(
         gen,
-        ({
-            'input_ids': int32,
-            'attention_mask': int32,
-            'token_type_ids': int32
-        }, int64),
+        (
+            {
+                'input_ids': int32,
+                'attention_mask': int32,
+                'token_type_ids': int32
+            }, int64
+        ),
         (
             {
                 'input_ids': TensorShape([None]),

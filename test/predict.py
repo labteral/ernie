@@ -9,7 +9,7 @@ class TestPredict(unittest.TestCase):
     classifier = SentenceClassifier(
         model_name=Models.BertBaseUncased,
         max_length=128,
-        labels_no=2
+        labels_no=2,
     )
 
     def test_batch_predict(self):
