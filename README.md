@@ -5,7 +5,7 @@
 <p>
 
 <p align="center">
-    <a href="https://pepy.tech/project/ernie/"><img alt="Downloads" src="https://img.shields.io/badge/dynamic/json?style=flat-square&maxAge=3600&label=downloads&query=$.total_downloads&url=https://api.pepy.tech/api/projects/ernie"></a>
+    <a href="https://pepy.tech/project/ernie/"><img alt="Downloads" src="https://img.shields.io/badge/dynamic/json?style=flat-square&maxAge=3600&label=downloads&query=$.total_downloads&url=https://analytics.pepy.tech/api/v2/projects/ernie"></a>
     <a href="https://pypi.python.org/pypi/ernie/"><img alt="PyPi" src="https://img.shields.io/pypi/v/ernie.svg?style=flat-square"></a>
     <a href="https://github.com/labteral/ernie/releases"><img alt="GitHub releases" src="https://img.shields.io/github/release/labteral/ernie.svg?style=flat-square"></a>
     <a href="https://github.com/labteral/ernie/blob/master/LICENSE"><img alt="License" src="https://img.shields.io/github/license/labteral/ernie.svg?style=flat-square"></a>
