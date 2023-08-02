@@ -15,17 +15,22 @@ def get_features(tokenizer, sentences, labels):
             add_special_tokens=True,
             max_length=tokenizer.model_max_length,
         )
-        input_ids, token_type_ids = (
-            inputs['input_ids'],
-            inputs['token_type_ids'],
-        )
+
+        input_ids = inputs['input_ids']
+        if 'token_type_ids' in inputs:
+            token_type_ids = inputs['token_type_ids']
+        else:
+            token_type_ids = [0] * len(input_ids)  # fill with zeros
+
         padding_length = tokenizer.model_max_length - len(input_ids)
 
         if tokenizer.padding_side == 'right':
             attention_mask = [1] * len(input_ids) + [0] * padding_length
             input_ids = input_ids + [tokenizer.pad_token_id] * padding_length
-            token_type_ids = token_type_ids + \
-                [tokenizer.pad_token_type_id] * padding_length
+            token_type_ids = (
+                token_type_ids + [tokenizer.pad_token_type_id] * padding_length
+            )
+
         else:
             attention_mask = [0] * padding_length + [1] * len(input_ids)
             input_ids = [tokenizer.pad_token_id] * padding_length + input_ids

@@ -266,9 +266,17 @@ class SentenceClassifier:
                     add_special_tokens=True,
                     max_length=self._tokenizer.model_max_length,
                 )
+
+                input_ids = features['input_ids']
+                if 'token_type_ids' in features:
+                    token_type_ids = features['token_type_ids']
+                else:
+                    token_type_ids = [0] * len(input_ids)  # fill with zeros
+
                 input_ids, _, attention_mask = (
-                    features['input_ids'], features['token_type_ids'],
-                    features['attention_mask']
+                    input_ids,
+                    token_type_ids,
+                    features['attention_mask'],
                 )
 
                 input_ids = self._list_to_padded_array(features['input_ids'])
