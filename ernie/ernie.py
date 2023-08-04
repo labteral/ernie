@@ -301,7 +301,10 @@ class SentenceClassifier:
 
     def _list_to_padded_array(self, items):
         array = np.array(items)
-        padded_array = np.zeros(self._tokenizer.model_max_length, dtype=np.int)
+        padded_array = np.zeros(
+            self._tokenizer.model_max_length,
+            dtype=int,
+        )
         padded_array[:array.shape[0]] = array
         return padded_array
 

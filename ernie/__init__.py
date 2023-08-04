@@ -5,7 +5,7 @@ from .ernie import *  # noqa: F401, F403
 from tensorflow.python.client import device_lib
 import logging
 
-__version__ = '1.2308.0'
+__version__ = '1.2308.1'
 
 logging.getLogger().setLevel(logging.WARNING)
 logging.getLogger("transformers.tokenization_utils").setLevel(logging.ERROR)
