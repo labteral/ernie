@@ -19,6 +19,10 @@
     <a href="https://www.buymeacoffee.com/brunneis" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="35px"></a>
 </p>
 
+<br>
+
+Sponsored by <a href="http://stickermule.com/supports/ernie20-sponsorship"><img src="misc/stickermule-logo.png" alt="Sticker Mule Logo" width="80px"/></a>
+
 # Installation
 > Ernie requires Python 3.6 or higher.
 ```bash
@@ -179,34 +183,6 @@ You can access some of the official base model names through the `Models` class.
 
 > See all the available models at [huggingface.co/models](https://huggingface.co/models).
 
-## BERT
-- `BertBaseUncased`
-- `BertBaseCased`
-- `BertLargeUncased`
-- `BertLargeCased`
-
-## RoBERTa
-- `RobertaBaseCased`
-- `RobertaLargeCased`
-
-## XLNet
-- `XLNetBaseCased`
-- `XLNetLargeCased`
-
-## DistilBERT
-- `DistilBertBaseUncased`
-- `DistilBertBaseMultilingualCased`
-
-## ALBERT
-- `AlbertBaseCased`
-- `AlbertLargeCased`
-- `AlbertXLargeCased`
-- `AlbertXXLargeCased`
-- `AlbertBaseCased2`
-- `AlbertLargeCased2`
-- `AlbertXLargeCased2`
-- `AlbertXXLargeCased2`
-
 # Additional Info
 
 ## Accesing the model and tokenizer
@@ -221,8 +197,3 @@ You can pass Keras arguments of the `model.fit` method to the `classifier.fine_t
 ```python
 classifier.fine_tune(class_weight={0: 0.2, 1: 0.8})
 ```
-
-<br>
-
-# Sponsors
-<a href="http://stickermule.com/supports/ernie20-sponsorship"><img src="misc/stickermule-logo.png" alt="Sticker Mule Logo" width="100px"/></a>
