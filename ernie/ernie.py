@@ -17,11 +17,11 @@ from .models import Models, ModelsByFamily  # noqa: F401
 from .split_strategies import (  # noqa: F401
     SplitStrategy,
     SplitStrategies,
-    RegexExpressions
+    RegexExpressions,
 )
 from .aggregation_strategies import (  # noqa: F401
     AggregationStrategy,
-    AggregationStrategies
+    AggregationStrategies,
 )
 from .helper import (get_features, softmax, remove_dir, make_dir, copy_dir)
 
@@ -33,6 +33,7 @@ def clean_autosave():
 
 
 class SentenceClassifier:
+
     def __init__(
         self,
         model_name=Models.BertBaseUncased,
@@ -90,25 +91,31 @@ class SentenceClassifier:
         labels = dataframe[dataframe.columns[1]].values
 
         (
-            training_sentences, validation_sentences, training_labels,
-            validation_labels
+            training_sentences,
+            validation_sentences,
+            training_labels,
+            validation_labels,
         ) = train_test_split(
             sentences,
             labels,
             test_size=validation_split,
             shuffle=True,
             random_state=random_state,
-            stratify=stratify
+            stratify=stratify,
         )
 
         self._training_features = get_features(
-            self._tokenizer, training_sentences, training_labels
+            self._tokenizer,
+            training_sentences,
+            training_labels,
         )
 
         self._training_size = len(training_sentences)
 
         self._validation_features = get_features(
-            self._tokenizer, validation_sentences, validation_labels
+            self._tokenizer,
+            validation_sentences,
+            validation_labels,
         )
         self._validation_split = len(validation_sentences)
 
@@ -140,7 +147,7 @@ class SentenceClassifier:
             optimizer_kwargs = {
                 'learning_rate': learning_rate,
                 'epsilon': epsilon,
-                'clipnorm': clipnorm
+                'clipnorm': clipnorm,
             }
         optimizer = optimizer_function(**optimizer_kwargs)
 
@@ -152,7 +159,11 @@ class SentenceClassifier:
             accuracy_kwargs = {'name': 'accuracy'}
         accuracy = accuracy_function(**accuracy_kwargs)
 
-        self._model.compile(optimizer=optimizer, loss=loss, metrics=[accuracy])
+        self._model.compile(
+            optimizer=optimizer,
+            loss=loss,
+            metrics=[accuracy],
+        )
 
         training_features = self._training_features.shuffle(
             self._training_size
@@ -178,7 +189,7 @@ class SentenceClassifier:
                 validation_data=validation_features,
                 steps_per_epoch=training_steps,
                 validation_steps=validation_steps,
-                **kwargs
+                **kwargs,
             )
 
         # The fine-tuned model does not have the same input interface
@@ -257,8 +268,10 @@ class SentenceClassifier:
             attention_mask_list = []
 
             stop_index = i + batch_size
-            stop_index = stop_index if stop_index < sentences_number \
-                else sentences_number
+            stop_index = (
+                stop_index
+                if stop_index < sentences_number else sentences_number
+            )
 
             for j in range(i, stop_index):
                 features = self._tokenizer.encode_plus(
@@ -332,7 +345,8 @@ class SentenceClassifier:
             self._tokenizer = AutoTokenizer.from_pretrained(model_path)
             self._config = AutoConfig.from_pretrained(model_path)
         self._model = TFAutoModelForSequenceClassification.from_pretrained(
-            model_path, from_pt=False
+            model_path,
+            from_pt=False,
         )
 
     def _get_model_family(self):
@@ -369,22 +383,24 @@ class SentenceClassifier:
         # PyTorch model
         except OSError:
             try:
-                self._model = \
+                self._model = (
                     TFAutoModelForSequenceClassification.from_pretrained(
                         model_name,
-                        from_pt=True
+                        from_pt=True,
                     )
+                )
 
             # Loading a TF model from a PyTorch checkpoint is not supported
             # when using a model identifier name
             except OSError:
                 model = AutoModel.from_pretrained(model_name)
                 model.save_pretrained(temporary_path)
-                self._model = \
+                self._model = (
                     TFAutoModelForSequenceClassification.from_pretrained(
                         temporary_path,
-                        from_pt=True
+                        from_pt=True,
                     )
+                )
 
         # Clean the model's last layer if the provided properties are different
         clean_last_layer = False
@@ -399,10 +415,14 @@ class SentenceClassifier:
 
         if clean_last_layer:
             try:
-                getattr(self._model, self._get_model_family()
-                        ).save_pretrained(temporary_path)
+                getattr(
+                    self._model,
+                    self._get_model_family(),
+                ).save_pretrained(temporary_path)
                 self._model = self._model.__class__.from_pretrained(
-                    temporary_path, from_pt=False, **model_kwargs
+                    temporary_path,
+                    from_pt=False,
+                    **model_kwargs,
                 )
 
             # The model is itself the main layer
@@ -410,7 +430,9 @@ class SentenceClassifier:
                 # TensorFlow model
                 try:
                     self._model = self._model.__class__.from_pretrained(
-                        model_name, from_pt=False, **model_kwargs
+                        model_name,
+                        from_pt=False,
+                        **model_kwargs,
                     )
 
                 # PyTorch Model
@@ -418,7 +440,9 @@ class SentenceClassifier:
                     model = AutoModel.from_pretrained(model_name)
                     model.save_pretrained(temporary_path)
                     self._model = self._model.__class__.from_pretrained(
-                        temporary_path, from_pt=True, **model_kwargs
+                        temporary_path,
+                        from_pt=True,
+                        **model_kwargs,
                     )
 
         remove_dir(temporary_path)

@@ -23,13 +23,14 @@ def _get_cpu_name():
 
 
 def _get_gpu_name():
-    gpu_name = \
-        device_lib\
-        .list_local_devices()[3]\
-        .physical_device_desc\
-        .split(',')[1]\
-        .split('name:')[1]\
+    gpu_name = (
+        device_lib
+        .list_local_devices()[3]
+        .physical_device_desc
+        .split(',')[1]
+        .split('name:')[1]
         .strip()
+    )
     return gpu_name
 
 

@@ -18,20 +18,21 @@ class RegexExpressions:
 
 
 class SplitStrategy:
+
     def __init__(
         self,
         split_patterns,
         remove_patterns=None,
         group_splits=True,
-        remove_too_short_groups=True
+        remove_too_short_groups=True,
     ):
         if not isinstance(split_patterns, list):
             self.split_patterns = [split_patterns]
         else:
             self.split_patterns = split_patterns
 
-        if remove_patterns is not None \
-                and not isinstance(remove_patterns, list):
+        if (remove_patterns is not None
+                and not isinstance(remove_patterns, list)):
             self.remove_patterns = [remove_patterns]
         else:
             self.remove_patterns = remove_patterns
@@ -39,7 +40,12 @@ class SplitStrategy:
         self.group_splits = group_splits
         self.remove_too_short_groups = remove_too_short_groups
 
-    def split(self, text, tokenizer, split_patterns=None):
+    def split(
+        self,
+        text,
+        tokenizer,
+        split_patterns=None,
+    ):
         if split_patterns is None:
             if self.split_patterns is None:
                 return [text]
@@ -77,8 +83,9 @@ class SplitStrategy:
                 if not self.group_splits:
                     selected_splits.append(split)
                 else:
-                    new_aggregated_splits = \
+                    new_aggregated_splits = (
                         f'{aggregated_splits} {split}'.strip()
+                    )
                     if len_in_tokens(new_aggregated_splits) <= max_tokens:
                         aggregated_splits = new_aggregated_splits
                     else:
@@ -88,14 +95,15 @@ class SplitStrategy:
         if aggregated_splits:
             selected_splits.append(aggregated_splits)
 
-        remove_too_short_groups = len(selected_splits) > 1 \
-            and self.group_splits \
+        remove_too_short_groups = (
+            len(selected_splits) > 1 and self.group_splits
             and self.remove_too_short_groups
+        )
 
         if not remove_too_short_groups:
             final_splits = selected_splits
         else:
-            final_splits
+            final_splits = []
             min_length = tokenizer.model_max_length / 2
             for split in selected_splits:
                 if len_in_tokens(split) >= min_length:
@@ -107,20 +115,30 @@ class SplitStrategy:
 class SplitStrategies:
     SentencesWithoutUrls = SplitStrategy(
         split_patterns=[
-            RegexExpressions.split_by_dot, RegexExpressions.split_by_semicolon,
-            RegexExpressions.split_by_colon, RegexExpressions.split_by_comma
+            RegexExpressions.split_by_dot,
+            RegexExpressions.split_by_semicolon,
+            RegexExpressions.split_by_colon,
+            RegexExpressions.split_by_comma,
         ],
-        remove_patterns=[RegexExpressions.url, RegexExpressions.domain],
+        remove_patterns=[
+            RegexExpressions.url,
+            RegexExpressions.domain,
+        ],
         remove_too_short_groups=False,
-        group_splits=False
+        group_splits=False,
     )
 
     GroupedSentencesWithoutUrls = SplitStrategy(
         split_patterns=[
-            RegexExpressions.split_by_dot, RegexExpressions.split_by_semicolon,
-            RegexExpressions.split_by_colon, RegexExpressions.split_by_comma
+            RegexExpressions.split_by_dot,
+            RegexExpressions.split_by_semicolon,
+            RegexExpressions.split_by_colon,
+            RegexExpressions.split_by_comma,
         ],
-        remove_patterns=[RegexExpressions.url, RegexExpressions.domain],
+        remove_patterns=[
+            RegexExpressions.url,
+            RegexExpressions.domain,
+        ],
         remove_too_short_groups=True,
-        group_splits=True
+        group_splits=True,
     )

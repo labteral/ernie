@@ -31,21 +31,36 @@ class Models:
 class ModelsByFamily:
     Bert = set(
         [
-            Models.BertBaseUncased, Models.BertBaseCased,
-            Models.BertLargeUncased, Models.BertLargeCased
+            Models.BertBaseUncased,
+            Models.BertBaseCased,
+            Models.BertLargeUncased,
+            Models.BertLargeCased,
         ]
     )
-    Roberta = set([Models.RobertaBaseCased, Models.RobertaLargeCased])
-    XLNet = set([Models.XLNetBaseCased, Models.XLNetLargeCased])
+    Roberta = set([
+        Models.RobertaBaseCased,
+        Models.RobertaLargeCased,
+    ])
+    XLNet = set([
+        Models.XLNetBaseCased,
+        Models.XLNetLargeCased,
+    ])
     DistilBert = set(
-        [Models.DistilBertBaseUncased, Models.DistilBertBaseMultilingualCased]
+        [
+            Models.DistilBertBaseUncased,
+            Models.DistilBertBaseMultilingualCased,
+        ]
     )
     Albert = set(
         [
-            Models.AlbertBaseCased, Models.AlbertLargeCased,
-            Models.AlbertXLargeCased, Models.AlbertXXLargeCased,
-            Models.AlbertBaseCased2, Models.AlbertLargeCased2,
-            Models.AlbertXLargeCased2, Models.AlbertXXLargeCased2
+            Models.AlbertBaseCased,
+            Models.AlbertLargeCased,
+            Models.AlbertXLargeCased,
+            Models.AlbertXXLargeCased,
+            Models.AlbertBaseCased2,
+            Models.AlbertLargeCased2,
+            Models.AlbertXLargeCased2,
+            Models.AlbertXXLargeCased2,
         ]
     )
     Supported = set(

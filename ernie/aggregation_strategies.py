@@ -5,8 +5,13 @@ from statistics import mean
 
 
 class AggregationStrategy:
+
     def __init__(
-        self, method, max_items=None, top_items=True, sorting_class_index=1
+        self,
+        method,
+        max_items=None,
+        top_items=True,
+        sorting_class_index=1,
     ):
         self.method = method
         self.max_items = max_items
@@ -44,14 +49,26 @@ class AggregationStrategy:
 class AggregationStrategies:
     Mean = AggregationStrategy(method=mean)
     MeanTopFiveBinaryClassification = AggregationStrategy(
-        method=mean, max_items=5, top_items=True, sorting_class_index=1
+        method=mean,
+        max_items=5,
+        top_items=True,
+        sorting_class_index=1,
     )
     MeanTopTenBinaryClassification = AggregationStrategy(
-        method=mean, max_items=10, top_items=True, sorting_class_index=1
+        method=mean,
+        max_items=10,
+        top_items=True,
+        sorting_class_index=1,
     )
     MeanTopFifteenBinaryClassification = AggregationStrategy(
-        method=mean, max_items=15, top_items=True, sorting_class_index=1
+        method=mean,
+        max_items=15,
+        top_items=True,
+        sorting_class_index=1,
     )
     MeanTopTwentyBinaryClassification = AggregationStrategy(
-        method=mean, max_items=20, top_items=True, sorting_class_index=1
+        method=mean,
+        max_items=20,
+        top_items=True,
+        sorting_class_index=1,
     )

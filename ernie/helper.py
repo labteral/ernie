@@ -7,7 +7,11 @@ from os import makedirs
 from shutil import rmtree, move, copytree
 
 
-def get_features(tokenizer, sentences, labels):
+def get_features(
+    tokenizer,
+    sentences,
+    labels,
+):
     features = []
     for i, sentence in enumerate(sentences):
         inputs = tokenizer.encode_plus(
@@ -34,19 +38,22 @@ def get_features(tokenizer, sentences, labels):
         else:
             attention_mask = [0] * padding_length + [1] * len(input_ids)
             input_ids = [tokenizer.pad_token_id] * padding_length + input_ids
-            token_type_ids = \
+            token_type_ids = (
                 [tokenizer.pad_token_type_id] * padding_length + token_type_ids
+            )
 
-        assert tokenizer.model_max_length \
-            == len(attention_mask) \
-            == len(input_ids) \
+        assert (
+            tokenizer.model_max_length
+            == len(attention_mask)
+            == len(input_ids)
             == len(token_type_ids)
+        )
 
         feature = {
             'input_ids': input_ids,
             'attention_mask': attention_mask,
             'token_type_ids': token_type_ids,
-            'label': int(labels[i])
+            'label': int(labels[i]),
         }
 
         features.append(feature)
@@ -68,7 +75,7 @@ def get_features(tokenizer, sentences, labels):
             {
                 'input_ids': int32,
                 'attention_mask': int32,
-                'token_type_ids': int32
+                'token_type_ids': int32,
             }, int64
         ),
         (
